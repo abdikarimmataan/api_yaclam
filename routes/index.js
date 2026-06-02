@@ -1,0 +1,34 @@
+const router = require("express").Router();
+const validate = require("../middlewares/validationMiddleware");
+const userVal = require("../validations/user.val");
+const userController = require("../controllers/user");
+
+router.post(
+  "/users/admin/bootstrap",
+  validate.validate(userVal.bootstrapAdminSchema),
+  userController.bootstrapAdmin
+);
+
+router.use("/users", require("./user"));
+router.use("/settings", require("./settings"));
+router.use("/footer", require("./footer"));
+router.use("/pages", require("./pages"));
+router.use("/home", require("./home"));
+router.use("/course", require("./course"));
+router.use("/courses", require("./courses"));
+router.use("/field", require("./field"));
+router.use("/fields", require("./field"));
+router.use("/home_sections", require("./home_sections"));
+router.use("/why_yaclam", require("./why_yaclam"));
+router.use("/practitioner", require("./practitioner"));
+router.use("/practitioners", require("./practitioner"));
+router.use("/testimonial", require("./testimonial"));
+router.use("/testimonials", require("./testimonial"));
+router.use("/roadmap", require("./roadmap"));
+router.use("/scholarship", require("./scholarship"));
+router.use("/blog_post", require("./blog_post"));
+router.use("/cart", require("./cart"));
+router.use("/newsletter", require("./newsletter"));
+router.use("/role", require("./role"));
+
+module.exports = router;
