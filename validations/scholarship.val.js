@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const { FUNDING_TYPES } = require("../utilities/scholarship.utility");
+const { FUNDING_TYPES, parseDeadlineDate } = require("../utilities/scholarship.utility");
 
 const stringList = Joi.alternatives().try(
   Joi.array().items(Joi.string()),
@@ -22,7 +22,18 @@ const baseFields = {
     .valid(...FUNDING_TYPES)
     .optional(),
   flag: Joi.string().allow("").optional(),
-  deadline: Joi.string().allow("").optional(),
+  deadline: Joi.alternatives()
+    .try(Joi.date(), Joi.string().trim().allow(""))
+    .optional()
+    .custom((value, helpers) => {
+      if (value === undefined || value === null || value === "") return value;
+      const parsed = parseDeadlineDate(value);
+      if (parsed === null) return helpers.error("any.invalid");
+      return parsed;
+    })
+    .messages({
+      "any.invalid": "deadline must be a valid date (e.g. 2026-12-30 or Dec 30, 2026)",
+    }),
   amount: Joi.string().allow("").optional(),
   website: Joi.string().allow("").optional(),
   applicationUrl: Joi.string().allow("").optional(),
@@ -36,7 +47,7 @@ const baseFields = {
   isFeatured: Joi.boolean().optional(),
   isPublished: Joi.boolean().optional(),
   isVisible: Joi.boolean().optional(),
-  sortOrder: Joi.number().optional(),
+  sortOrder: Joi.number().integer().min(0).optional(),
   status: Joi.boolean().optional(),
 };
 

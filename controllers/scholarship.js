@@ -7,14 +7,43 @@ const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
 
+async function getNextScholarshipSortOrder() {
+  const last = await Scholarship.findOne({ del_status: "Live" })
+    .sort({ sortOrder: -1 })
+    .select("sortOrder")
+    .lean();
+  if (!last) return 1;
+  return (last.sortOrder ?? 0) + 1;
+}
+
+async function findLiveScholarshipByExactName(name, excludeId = null) {
+  const trimmedName = name.trim();
+  const filter = { del_status: "Live", name: trimmedName };
+  if (excludeId) filter._id = { $ne: excludeId };
+  return Scholarship.findOne(filter);
+}
+
 module.exports = {
   create: async (req, res) => {
     try {
-      const scholarship = new Scholarship(buildScholarshipPayload(req.body));
+      const payload = buildScholarshipPayload(req.body);
+
+      if (payload.name) {
+        const existing = await findLiveScholarshipByExactName(payload.name);
+        if (existing) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      }
+
+      const sortOrder =
+        req.body.sortOrder != null && Number.isFinite(Number(req.body.sortOrder))
+          ? Math.max(0, Math.trunc(Number(req.body.sortOrder)))
+          : await getNextScholarshipSortOrder();
+      const scholarship = new Scholarship({ ...payload, sortOrder });
       const saved = await scholarship.save();
       return Response.successResponse(res, 201, saved);
     } catch (err) {
-      if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      if (err?.code === 11000 && err?.keyPattern?.name) {
+        return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      }
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
@@ -79,11 +108,19 @@ module.exports = {
       const scholarship = await Scholarship.findOne({ _id: id, del_status: "Live" });
       if (!scholarship) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
 
-      Object.assign(scholarship, buildScholarshipPayload(req.body));
+      const payload = buildScholarshipPayload(req.body);
+      if (payload.name) {
+        const duplicate = await findLiveScholarshipByExactName(payload.name, id);
+        if (duplicate) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      }
+
+      Object.assign(scholarship, payload);
       const updated = await scholarship.save();
       return Response.successResponse(res, 200, updated);
     } catch (err) {
-      if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      if (err?.code === 11000 && err?.keyPattern?.name) {
+        return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      }
       return Response.errorResponse(res, 500, err.message || err);
     }
   },

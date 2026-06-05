@@ -6,10 +6,23 @@ const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
 
+async function getNextWhyYaclamSortOrder() {
+  const last = await WhyYaclam.findOne({ del_status: "Live" })
+    .sort({ sortOrder: -1 })
+    .select("sortOrder")
+    .lean();
+  if (!last) return 1;
+  return (last.sortOrder ?? 0) + 1;
+}
+
 module.exports = {
   create: async (req, res) => {
     try {
-      const doc = new WhyYaclam(req.body);
+      const sortOrder =
+        req.body.sortOrder != null && Number.isFinite(Number(req.body.sortOrder))
+          ? Math.max(0, Math.trunc(Number(req.body.sortOrder)))
+          : await getNextWhyYaclamSortOrder();
+      const doc = new WhyYaclam({ ...req.body, sortOrder });
       const saved = await doc.save();
       return Response.successResponse(res, 201, saved);
     } catch (err) {

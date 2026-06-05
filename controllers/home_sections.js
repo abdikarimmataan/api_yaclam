@@ -16,11 +16,27 @@ const SECTION_KEYS = [
   "ctaSection",
 ];
 
+const CARD_SECTION_KEYS = [
+  "fieldSection",
+  "featuredCoursesSection",
+  "whyYaclamSection",
+  "roadmapsSection",
+  "scholarshipsSection",
+  "practitionersSection",
+  "testimonialsSection",
+];
+
 function applySectionVisibility(payload = {}) {
   const data = { ...payload };
   SECTION_KEYS.forEach((key) => {
     if (data[key] && typeof data[key] === "object" && data[key].isVisible === undefined) {
       data[key] = { ...data[key], isVisible: true };
+    }
+  });
+
+  CARD_SECTION_KEYS.forEach((key) => {
+    if (data[key] && typeof data[key] === "object" && data[key].cardNumberVisible === undefined) {
+      data[key] = { ...data[key], cardNumberVisible: 5 };
     }
   });
 

@@ -7,10 +7,24 @@ const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
 
+async function getNextRoadmapSortOrder() {
+  const last = await Roadmap.findOne({ del_status: "Live" })
+    .sort({ sortOrder: -1 })
+    .select("sortOrder")
+    .lean();
+  if (!last) return 1;
+  return (last.sortOrder ?? 0) + 1;
+}
+
 module.exports = {
   create: async (req, res) => {
     try {
-      const roadmap = new Roadmap(buildRoadmapPayload(req.body));
+      const payload = buildRoadmapPayload(req.body);
+      const sortOrder =
+        req.body.sortOrder != null && Number.isFinite(Number(req.body.sortOrder))
+          ? Math.max(0, Math.trunc(Number(req.body.sortOrder)))
+          : await getNextRoadmapSortOrder();
+      const roadmap = new Roadmap({ ...payload, sortOrder });
       const saved = await roadmap.save();
       return Response.successResponse(res, 201, saved);
     } catch (err) {
