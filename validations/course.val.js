@@ -1,12 +1,60 @@
 const Joi = require("joi");
 
-const createSchema = Joi.object({
+const lessonSchema = Joi.object({
+  id: Joi.string().optional(),
   title: Joi.string().required(),
-  slug: Joi.string().required(),
-  fieldId: Joi.string().required(),
+  duration: Joi.string().allow("").optional(),
+  free: Joi.boolean().optional(),
+  videoUrl: Joi.string().allow("").optional(),
+  vimeoId: Joi.string().allow("").optional(),
+  sortOrder: Joi.number().optional(),
+  isVisible: Joi.boolean().optional(),
+});
+
+const moduleSchema = Joi.object({
+  title: Joi.string().required(),
+  sortOrder: Joi.number().optional(),
+  isVisible: Joi.boolean().optional(),
+  lessons: Joi.array().items(lessonSchema).default([]),
+});
+
+const overviewSchema = Joi.object({
+  headline: Joi.string().allow("").optional(),
+  description: Joi.string().allow("").optional(),
+  outcomes: Joi.array().items(Joi.string()).optional(),
+});
+
+const detailsSchema = Joi.object({
+  skillLevel: Joi.string().allow("").optional(),
+  language: Joi.string().allow("").optional(),
+  durationHours: Joi.number().min(0).optional(),
+  lessonCount: Joi.number().min(0).optional(),
+  certificate: Joi.boolean().optional(),
+  access: Joi.string().allow("").optional(),
+});
+
+const instructorSchema = Joi.object({
+  instructorId: Joi.string().allow("", null).optional(),
+  name: Joi.string().allow("").optional(),
+  role: Joi.string().allow("").optional(),
+  bio: Joi.string().allow("").optional(),
+  avatar: Joi.string().allow("").optional(),
+});
+
+const baseFields = {
+  title: Joi.string(),
+  fieldId: Joi.string(),
   description: Joi.string().allow("").optional(),
   shortDescription: Joi.string().allow("").optional(),
   category: Joi.string().allow("").optional(),
+  level: Joi.string().allow("").optional(),
+  language: Joi.string().allow("").optional(),
+  duration: Joi.string().allow("").optional(),
+  color: Joi.string().allow("").optional(),
+  badge: Joi.string().allow("").optional(),
+  certificate: Joi.boolean().optional(),
+  access: Joi.string().allow("").optional(),
+  instructorId: Joi.string().allow("", null).optional(),
   instructorName: Joi.string().allow("").optional(),
   thumbnail: Joi.string().allow("").optional(),
   price: Joi.number().min(0).optional(),
@@ -15,15 +63,35 @@ const createSchema = Joi.object({
   isFeatured: Joi.boolean().optional(),
   isPublished: Joi.boolean().optional(),
   isVisible: Joi.boolean().optional(),
-  durationHours: Joi.number().optional(),
-  lessonCount: Joi.number().optional(),
+  durationHours: Joi.number().min(0).optional(),
+  lessonCount: Joi.number().min(0).optional(),
   rating: Joi.number().optional(),
   reviewCount: Joi.number().optional(),
   studentCount: Joi.number().optional(),
   sortOrder: Joi.number().optional(),
   status: Joi.boolean().optional(),
+  overview: overviewSchema.optional(),
+  curriculum: Joi.array().items(moduleSchema).optional(),
+  details: detailsSchema.optional(),
+  instructor: instructorSchema.optional(),
+  removeThumbnail: Joi.boolean().optional(),
+  moduleIndex: Joi.number().integer().min(0).optional(),
+  lessonIndex: Joi.number().integer().min(0).optional(),
+  lessonId: Joi.string().allow("").optional(),
+};
+
+const createSchema = Joi.object({
+  ...baseFields,
+  title: Joi.string().required(),
+  fieldId: Joi.string().required(),
 });
 
-const updateSchema = createSchema.fork(["title", "slug"], (s) => s.optional());
+const updateSchema = Joi.object(baseFields).min(1);
 
-module.exports = { createSchema, updateSchema };
+const uploadLessonVideoSchema = Joi.object({
+  moduleIndex: Joi.number().integer().min(0).required(),
+  lessonIndex: Joi.number().integer().min(0).required(),
+  lessonId: Joi.string().allow("").optional(),
+});
+
+module.exports = { createSchema, updateSchema, uploadLessonVideoSchema };

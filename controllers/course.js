@@ -7,24 +7,131 @@ const Field = require("../models/field.model");
 const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
+const { parseCourseBody, normalizeCurriculum, syncFlatFields } = require("../utilities/course.utility");
+const {
+  collectPendingFiles,
+  commitPendingFiles,
+  rollbackPendingFiles,
+  rollbackCommittedPaths,
+  deleteByPublicPath,
+  applyLessonVideoToBody,
+  applyCourseFields,
+  cleanupCurriculumVideos,
+  serializeCurriculum,
+  setLessonVideoUrl,
+  getLessonVideoUrl,
+  findLessonIndices,
+  shouldRemoveThumbnail,
+} = require("../utilities/course-upload.utility");
+const { toPublicPath } = require("../middlewares/upload.middleware");
+
+const { THUMBNAIL_MAX_BYTES, VIDEO_MAX_BYTES } = require("../middlewares/upload.middleware");
+
+function formatMb(bytes) {
+  return `${Math.round(bytes / (1024 * 1024))} MB`;
+}
+
+function handleUploadError(err, res) {
+  if (err?.code === "LIMIT_FILE_SIZE") {
+    const field = err?.field || "file";
+    const isVideo = field === "video";
+    const maxLabel = isVideo ? formatMb(VIDEO_MAX_BYTES) : formatMb(THUMBNAIL_MAX_BYTES);
+    return Response.errorResponse(res, 400, {
+      message: `File is too large. Max ${field} size is ${maxLabel}.`,
+    });
+  }
+  if (err?.message) {
+    return Response.errorResponse(res, 400, { message: err.message });
+  }
+  return Response.errorResponse(res, 500, err);
+}
+
+function buildCoursePayload(raw, { courseKey } = {}) {
+  let body = syncFlatFields(parseCourseBody(raw));
+
+  if (body.curriculum !== undefined) {
+    const key = courseKey || body.title || "course";
+    body.curriculum = normalizeCurriculum(body.curriculum, key);
+  }
+
+  if (body.overview && body.description && !body.overview.description) {
+    body.overview.description = body.description;
+  }
+
+  if (body.instructorName && body.instructor) {
+    body.instructor = { ...body.instructor, name: body.instructor.name || body.instructorName };
+  } else if (body.instructorName && !body.instructor) {
+    body.instructor = { name: body.instructorName };
+  }
+
+  if (body.details) {
+    body.details = {
+      skillLevel: body.details.skillLevel || body.level || "Beginner",
+      language: body.details.language || body.language || "Somali",
+      durationHours: body.details.durationHours ?? body.durationHours ?? 0,
+      lessonCount: body.details.lessonCount ?? body.lessonCount ?? 0,
+      certificate: body.details.certificate ?? body.certificate ?? true,
+      access: body.details.access || body.access || "1 Year",
+    };
+    body.level = body.details.skillLevel;
+    body.language = body.details.language;
+    body.durationHours = body.details.durationHours;
+    body.certificate = body.details.certificate;
+    body.access = body.details.access;
+  }
+
+  return body;
+}
+
+function applyCommittedUploads(body, committed) {
+  if (committed.thumbnail) body.thumbnail = committed.thumbnail;
+  return body;
+}
+
+async function validateField(fieldId) {
+  if (!isValidObjectId(fieldId)) {
+    return { error: "fieldId is required and must be a valid id" };
+  }
+  const field = await Field.findOne({ _id: fieldId, del_status: "Live" });
+  if (!field) return { error: "Field not found" };
+  return { field };
+}
 
 module.exports = {
   create: async (req, res) => {
+    const pendingFiles = collectPendingFiles(req);
+    let committed = null;
+
     try {
-      const { fieldId } = req.body;
-      if (!isValidObjectId(fieldId)) {
-        return Response.errorResponse(res, 400, { message: "fieldId is required and must be a valid id" });
+      let body = buildCoursePayload(req.body);
+      const { fieldId } = body;
+
+      const fieldCheck = await validateField(fieldId);
+      if (fieldCheck.error) {
+        rollbackPendingFiles(pendingFiles);
+        return Response.errorResponse(res, fieldCheck.error.includes("not found") ? 404 : 400, {
+          message: fieldCheck.error,
+        });
       }
 
-      const field = await Field.findOne({ _id: fieldId, del_status: "Live" });
-      if (!field) {
-        return Response.customResponse(res, 404, "Field not found");
+      if (pendingFiles.length) {
+        committed = commitPendingFiles(pendingFiles);
+        body = applyCommittedUploads(body, committed);
+        if (committed.video) {
+          const applied = applyLessonVideoToBody(body, committed.video, null);
+          body = applied.body;
+        }
       }
 
-      const course = new Course(req.body);
+      const course = new Course(body);
+      if (body.curriculum !== undefined) {
+        course.markModified("curriculum");
+      }
       const saved = await course.save();
       return Response.successResponse(res, 201, saved);
     } catch (err) {
+      if (committed) rollbackCommittedPaths(committed);
+      rollbackPendingFiles(pendingFiles);
       if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
       return Response.errorResponse(res, 500, err.message || err);
     }
@@ -49,7 +156,8 @@ module.exports = {
       }
 
       pagination.data = await Course.find(filter)
-        .populate("fieldId", "name slug icon")
+        .populate("fieldId", "name icon")
+        .populate("instructor.instructorId", "email profile.full_name profile.avatar_url")
         .sort({ sortOrder: 1, created_at: -1 })
         .skip(skip)
         .limit(pagination.pageSize);
@@ -71,7 +179,9 @@ module.exports = {
         return Response.errorResponse(res, 400, { message: ResponseMessage.INVALID_ID });
       }
 
-      const course = await Course.findOne({ _id: id, del_status: "Live" }).populate("fieldId", "name slug icon");
+      const course = await Course.findOne({ _id: id, del_status: "Live" })
+        .populate("fieldId", "name icon")
+        .populate("instructor.instructorId", "email profile.full_name profile.avatar_url");
       if (!course) {
         return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
       }
@@ -82,44 +192,172 @@ module.exports = {
     }
   },
 
-  getBySlug: async (req, res) => {
-    try {
-      const course = await Course.findOne({
-        slug: req.params.slug.toLowerCase(),
-        del_status: "Live",
-      }).populate("fieldId", "name slug icon");
-      if (!course) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
-      return Response.successResponse(res, 200, course);
-    } catch (err) {
-      return Response.errorResponse(res, 500, err.message || err);
-    }
-  },
-
   update: async (req, res) => {
+    const pendingFiles = collectPendingFiles(req);
+    let committed = null;
+
     try {
       const { id } = req.params;
       if (!isValidObjectId(id)) {
+        rollbackPendingFiles(pendingFiles);
         return Response.errorResponse(res, 400, { message: ResponseMessage.INVALID_ID });
       }
 
       const course = await Course.findOne({ _id: id, del_status: "Live" });
-      if (!course) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
+      if (!course) {
+        rollbackPendingFiles(pendingFiles);
+        return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
+      }
 
-      if (req.body.fieldId !== undefined) {
-        if (!isValidObjectId(req.body.fieldId)) {
-          return Response.errorResponse(res, 400, { message: "fieldId must be a valid id" });
-        }
-        const field = await Field.findOne({ _id: req.body.fieldId, del_status: "Live" });
-        if (!field) {
-          return Response.customResponse(res, 404, "Field not found");
+      const oldThumbnail = course.thumbnail;
+      const oldCurriculum = course.curriculum ? JSON.parse(JSON.stringify(course.curriculum)) : [];
+
+      let body = buildCoursePayload(req.body, { courseKey: course._id.toString() });
+      const removeThumbnail = shouldRemoveThumbnail(body);
+      delete body.removeThumbnail;
+
+      if (body.fieldId !== undefined) {
+        const fieldCheck = await validateField(body.fieldId);
+        if (fieldCheck.error) {
+          rollbackPendingFiles(pendingFiles);
+          return Response.errorResponse(res, fieldCheck.error.includes("not found") ? 404 : 400, {
+            message: fieldCheck.error,
+          });
         }
       }
 
-      Object.assign(course, req.body);
+      let replacedLessonVideoUrl = null;
+
+      if (pendingFiles.length) {
+        committed = commitPendingFiles(pendingFiles);
+        body = applyCommittedUploads(body, committed);
+        if (committed.video) {
+          const applied = applyLessonVideoToBody(body, committed.video, course);
+          body = applied.body;
+          replacedLessonVideoUrl = applied.replacedVideoUrl;
+        }
+      }
+
+      if (removeThumbnail && !committed?.thumbnail) {
+        body.thumbnail = "";
+      }
+
+      delete body.moduleIndex;
+      delete body.lessonIndex;
+      delete body.lessonId;
+
+      applyCourseFields(course, body);
       const updated = await course.save();
+
+      if (removeThumbnail && oldThumbnail) {
+        deleteByPublicPath(oldThumbnail);
+      } else if (committed?.thumbnail && oldThumbnail && oldThumbnail !== committed.thumbnail) {
+        deleteByPublicPath(oldThumbnail);
+      }
+
+      const keepUrls = [committed?.video, committed?.thumbnail].filter(Boolean);
+      if (body.curriculum !== undefined || committed?.video) {
+        cleanupCurriculumVideos(oldCurriculum, updated.curriculum, { keepUrls });
+      } else if (replacedLessonVideoUrl && committed?.video) {
+        deleteByPublicPath(replacedLessonVideoUrl);
+      }
+
       return Response.successResponse(res, 200, updated);
     } catch (err) {
+      if (committed) rollbackCommittedPaths(committed);
+      rollbackPendingFiles(pendingFiles);
       if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  uploadThumbnail: async (req, res) => {
+    try {
+      if (!req.file?.filename) {
+        return Response.errorResponse(res, 400, { message: "thumbnail file is required" });
+      }
+      const thumbnail = toPublicPath(req.file.filename, "thumbnail");
+      return Response.successResponse(res, 200, { thumbnail });
+    } catch (err) {
+      if (req.file?.path) deleteByPublicPath(toPublicPath(req.file.filename, "thumbnail"));
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  uploadVideo: async (req, res) => {
+    try {
+      if (!req.file?.filename) {
+        return Response.errorResponse(res, 400, { message: "video file is required" });
+      }
+      const videoUrl = toPublicPath(req.file.filename, "video");
+      return Response.successResponse(res, 200, { videoUrl });
+    } catch (err) {
+      if (req.file?.filename) deleteByPublicPath(toPublicPath(req.file.filename, "video"));
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  uploadLessonVideo: async (req, res) => {
+    const pending = collectPendingFiles(req);
+    let committedVideoUrl = null;
+
+    try {
+      const { id } = req.params;
+      const body = parseCourseBody(req.body);
+      const moduleIndex = body.moduleIndex;
+      const lessonIndex = body.lessonIndex;
+      const lessonId = body.lessonId;
+
+      if (!isValidObjectId(id)) {
+        rollbackPendingFiles(pending);
+        return Response.errorResponse(res, 400, { message: ResponseMessage.INVALID_ID });
+      }
+
+      if (!pending.length) {
+        return Response.errorResponse(res, 400, { message: "video file is required" });
+      }
+
+      const course = await Course.findOne({ _id: id, del_status: "Live" });
+      if (!course) {
+        rollbackPendingFiles(pending);
+        return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
+      }
+
+      const target = findLessonIndices(course.curriculum, { moduleIndex, lessonIndex, lessonId });
+      if (!target) {
+        rollbackPendingFiles(pending);
+        return Response.errorResponse(res, 400, { message: "Invalid moduleIndex, lessonIndex, or lessonId" });
+      }
+
+      const oldVideoUrl = getLessonVideoUrl(course.curriculum, target.mi, target.li);
+      committedVideoUrl = commitPendingFiles(pending).video;
+
+      const saved = setLessonVideoUrl(course, target.mi, target.li, committedVideoUrl);
+      if (!saved) {
+        rollbackPendingFiles(pending);
+        if (committedVideoUrl) deleteByPublicPath(committedVideoUrl);
+        return Response.errorResponse(res, 400, { message: "Lesson not found in curriculum" });
+      }
+
+      await course.save();
+
+      if (oldVideoUrl && oldVideoUrl !== committedVideoUrl) {
+        deleteByPublicPath(oldVideoUrl);
+      }
+
+      const mod = serializeCurriculum(course.curriculum)[target.mi];
+      const lesson = mod?.lessons?.[target.li];
+
+      return Response.successResponse(res, 200, {
+        videoUrl: committedVideoUrl,
+        lessonId: lesson?.id,
+        moduleTitle: mod?.title,
+        lessonTitle: lesson?.title,
+        course: course.toJSON ? course.toJSON() : course,
+      });
+    } catch (err) {
+      if (committedVideoUrl) deleteByPublicPath(committedVideoUrl);
+      rollbackPendingFiles(pending);
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
@@ -161,4 +399,6 @@ module.exports = {
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
+
+  handleUploadError,
 };

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { isValidObjectId } = mongoose;
 
 const Scholarship = require("../models/scholarship.model");
+const { buildScholarshipPayload } = require("../utilities/scholarship.utility");
 const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
@@ -9,7 +10,7 @@ const PaginationUtility = require("../utilities/pagination_utility.js");
 module.exports = {
   create: async (req, res) => {
     try {
-      const scholarship = new Scholarship(req.body);
+      const scholarship = new Scholarship(buildScholarshipPayload(req.body));
       const saved = await scholarship.save();
       return Response.successResponse(res, 201, saved);
     } catch (err) {
@@ -68,19 +69,6 @@ module.exports = {
     }
   },
 
-  getBySlug: async (req, res) => {
-    try {
-      const scholarship = await Scholarship.findOne({
-        slug: req.params.slug.toLowerCase(),
-        del_status: "Live",
-      });
-      if (!scholarship) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
-      return Response.successResponse(res, 200, scholarship);
-    } catch (err) {
-      return Response.errorResponse(res, 500, err.message || err);
-    }
-  },
-
   update: async (req, res) => {
     try {
       const { id } = req.params;
@@ -91,7 +79,7 @@ module.exports = {
       const scholarship = await Scholarship.findOne({ _id: id, del_status: "Live" });
       if (!scholarship) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
 
-      Object.assign(scholarship, req.body);
+      Object.assign(scholarship, buildScholarshipPayload(req.body));
       const updated = await scholarship.save();
       return Response.successResponse(res, 200, updated);
     } catch (err) {

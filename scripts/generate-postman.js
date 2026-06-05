@@ -22,7 +22,10 @@ const variables = [
   { key: "testimonialId", value: "" },
   { key: "roadmapId", value: "" },
   { key: "scholarshipId", value: "" },
+  { key: "scholarshipCmsId", value: "" },
+  { key: "blogCategoryId", value: "" },
   { key: "blogPostId", value: "" },
+  { key: "footerId", value: "" },
   { key: "roleId", value: "" },
 ];
 
@@ -46,13 +49,232 @@ function paginationQuery() {
 
 function req(method, pathSegments, opts = {}) {
   const headers = [...(opts.headers || [])];
-  const request = { method, header: headers, url: url(pathSegments, opts.query) };
+  const request = { method, header: headers };
+  if (opts.fullUrl) {
+    request.url = { raw: opts.fullUrl };
+  } else {
+    request.url = url(pathSegments, opts.query);
+  }
   if (opts.body) request.body = { mode: "raw", raw: opts.body };
   if (opts.event) request.event = opts.event;
   return { name: opts.name, request };
 }
 
+function formReq(method, pathSegments, opts = {}) {
+  const headers = [...(opts.headers || [])];
+  const request = { method, header: headers, url: url(pathSegments, opts.query) };
+  request.body = { mode: "formdata", formdata: opts.formdata || [] };
+  if (opts.event) request.event = opts.event;
+  return { name: opts.name, request };
+}
+
+const courseCreatePayload = {
+  title: "Power BI & Data Analytics Mastery",
+  fieldId: "{{fieldId}}",
+  description:
+    "A practical, project-based course taught in Somali with English technical terms. Master Power BI and data analytics with real projects.",
+  shortDescription: "Master Power BI and data analytics with real projects.",
+  category: "data",
+  level: "Intermediate",
+  language: "Somali",
+  color: "#1F3A93",
+  badge: "Bestseller",
+  certificate: true,
+  access: "1 Year",
+  duration: "32 hours",
+  durationHours: 32,
+  price: 49,
+  originalPrice: 89,
+  isFeatured: true,
+  isPublished: true,
+  isVisible: true,
+  overview: {
+    headline: "Build smarter, not harder",
+    description:
+      "A practical, project-based course taught in Somali with English technical terms.",
+    outcomes: [
+      "Build real, portfolio-ready projects from scratch",
+      "Understand core concepts deeply, explained in Somali",
+      "Earn a verified certificate of completion",
+    ],
+  },
+  curriculum: [
+    {
+      title: "Getting Started",
+      sortOrder: 0,
+      lessons: [
+        {
+          id: "power-bi-data-analytics-mastery-m1-l1",
+          title: "Welcome & how to use this course",
+          duration: "04:12",
+          free: true,
+          vimeoId: "76979871",
+        },
+        {
+          id: "power-bi-data-analytics-mastery-m1-l2",
+          title: "Setting up your environment",
+          duration: "08:24",
+          free: true,
+          vimeoId: "22439234",
+        },
+      ],
+    },
+    {
+      title: "Core Concepts",
+      sortOrder: 1,
+      lessons: [
+        {
+          id: "power-bi-data-analytics-mastery-m2-l1",
+          title: "The fundamentals, explained simply",
+          duration: "12:38",
+          vimeoId: "57266357",
+        },
+      ],
+    },
+  ],
+  details: {
+    skillLevel: "Intermediate",
+    language: "Somali",
+    durationHours: 32,
+    certificate: true,
+    access: "1 Year",
+  },
+  instructor: {
+    name: "Abdikarim Mataan",
+    role: "Practitioner-instructor",
+    bio: "Practitioner-instructor with years of real-world experience.",
+    avatar: "",
+  },
+};
+
+function courseFolder() {
+  const createBody = JSON.stringify(courseCreatePayload, null, 2);
+  const updateBody = JSON.stringify(
+    {
+      price: 55,
+      overview: { headline: "Build smarter, not harder — updated" },
+      details: { access: "Lifetime" },
+    },
+    null,
+    2
+  );
+  const multipartData = JSON.stringify(courseCreatePayload, null, 2);
+
+  return {
+    name: "Course",
+    description:
+      "Course entity — overview, curriculum, details, instructor. Supports JSON and multipart (thumbnail + data). Public: getAll, getById. Auth: create, update, uploads, delete.",
+    item: [
+      req("POST", "course/create", {
+        name: "Create (JSON)",
+        headers: [jsonHeader, authHeader],
+        body: createBody,
+        event: saveIdTest("courseId"),
+      }),
+      formReq("POST", "course/create", {
+        name: "Create (Multipart)",
+        headers: [authHeader],
+        formdata: [
+          { key: "thumbnail", type: "file", src: [], description: "Course thumbnail image" },
+          { key: "data", type: "text", value: multipartData, description: "JSON string — same fields as Create (JSON)" },
+        ],
+        event: saveIdTest("courseId"),
+      }),
+      req("GET", "course/getAll", {
+        name: "GetAll",
+        query: paginationQuery(),
+        headers: [],
+      }),
+      req("GET", "course/getAll", {
+        name: "GetAll (featured)",
+        query: [
+          ...paginationQuery(),
+          { key: "isFeatured", value: "true" },
+        ],
+        headers: [],
+      }),
+      req("GET", "course/getAll", {
+        name: "GetAll (free)",
+        query: [
+          ...paginationQuery(),
+          { key: "isFree", value: "true" },
+        ],
+        headers: [],
+      }),
+      req("GET", "course/getById/{{courseId}}", {
+        name: "GetById",
+        headers: [authHeader],
+      }),
+      req("PATCH", "course/update/{{courseId}}", {
+        name: "Update (JSON)",
+        headers: [jsonHeader, authHeader],
+        body: updateBody,
+      }),
+      formReq("PATCH", "course/update/{{courseId}}", {
+        name: "Update (Multipart)",
+        headers: [authHeader],
+        formdata: [
+          { key: "thumbnail", type: "file", src: [], description: "Optional new thumbnail" },
+          {
+            key: "data",
+            type: "text",
+            value: updateBody,
+            description: "Partial update JSON (overview, curriculum, details, instructor, etc.)",
+          },
+        ],
+      }),
+      formReq("POST", "course/upload/thumbnail", {
+        name: "Upload Thumbnail",
+        headers: [authHeader],
+        formdata: [{ key: "thumbnail", type: "file", src: [], description: "Returns { thumbnail: '/uploads/courses/thumbnails/...' }" }],
+      }),
+      formReq("POST", "course/upload/video", {
+        name: "Upload Video",
+        headers: [authHeader],
+        formdata: [{ key: "video", type: "file", src: [], description: "Returns { videoUrl: '/uploads/courses/videos/...' }" }],
+      }),
+      formReq("POST", "course/{{courseId}}/curriculum/lesson-video", {
+        name: "Upload Lesson Video",
+        headers: [authHeader],
+        formdata: [
+          { key: "video", type: "file", src: [], description: "Lesson video file" },
+          { key: "moduleIndex", type: "text", value: "0", description: "Zero-based module index in curriculum[]" },
+          { key: "lessonIndex", type: "text", value: "0", description: "Zero-based lesson index in module.lessons[]" },
+        ],
+      }),
+      req("PATCH", "course/status/{{courseId}}", {
+        name: "UpdateStatus",
+        headers: [jsonHeader, authHeader],
+        body: JSON.stringify({ status: true }, null, 2),
+      }),
+      req("DELETE", "course/delete/{{courseId}}", {
+        name: "Delete",
+        headers: [authHeader],
+      }),
+    ],
+  };
+}
+
 function entityFolder(modulePath, idVar, opts = {}) {
+  const getByIdHeaders = opts.publicGetById ? [] : [authHeader];
+
+  if (opts.aliasOnly) {
+    return {
+      name: opts.folderName || `${modulePath} (alias)`,
+      item: [
+        req("GET", `${modulePath}/getAll`, {
+          name: "GetAll",
+          query: paginationQuery(),
+          headers: [],
+        }),
+        req("GET", `${modulePath}/getById/{{${idVar}}}`, {
+          name: "GetById",
+          headers: getByIdHeaders,
+        }),
+      ],
+    };
+  }
+
   const items = [
     req("POST", `${modulePath}/create`, {
       name: "Create",
@@ -61,13 +283,14 @@ function entityFolder(modulePath, idVar, opts = {}) {
       event: opts.createEvent,
     }),
     req("GET", `${modulePath}/getAll`, {
-      name: "GetAll",
+      name: "GetAll (public)",
       query: paginationQuery(),
       headers: [],
     }),
+    ...(opts.extraGetAll || []),
     req("GET", `${modulePath}/getById/{{${idVar}}}`, {
-      name: "GetById",
-      headers: [authHeader],
+      name: opts.publicGetById ? "GetById (public)" : "GetById",
+      headers: getByIdHeaders,
     }),
     req("PATCH", `${modulePath}/update/{{${idVar}}}`, {
       name: "Update",
@@ -76,20 +299,10 @@ function entityFolder(modulePath, idVar, opts = {}) {
     }),
   ];
 
-  if (opts.includeSlug !== false) {
-    items.splice(
-      2,
-      0,
-      req("GET", `${modulePath}/${opts.slugExample || "example-slug"}`, {
-        name: "GetBySlug",
-        headers: [],
-      })
-    );
-  }
-
   if (opts.statusBody) {
+    const statusPath = opts.statusPath || "status";
     items.push(
-      req("PATCH", `${modulePath}/status/{{${idVar}}}`, {
+      req("PATCH", `${modulePath}/${statusPath}/{{${idVar}}}`, {
         name: "UpdateStatus",
         headers: [jsonHeader, authHeader],
         body: opts.statusBody,
@@ -97,12 +310,14 @@ function entityFolder(modulePath, idVar, opts = {}) {
     );
   }
 
-  items.push(
-    req("DELETE", `${modulePath}/delete/{{${idVar}}}`, {
-      name: "Delete",
-      headers: [authHeader],
-    })
-  );
+  if (!opts.skipDelete) {
+    items.push(
+      req("DELETE", `${modulePath}/delete/{{${idVar}}}`, {
+        name: "Delete",
+        headers: [authHeader],
+      })
+    );
+  }
 
   return { name: opts.folderName || modulePath, item: items };
 }
@@ -155,21 +370,21 @@ const homeSectionsSample = JSON.stringify(
         type: "featuredCourses",
         data: {
           title: "Featured Courses",
-          courseSlugs: ["power-bi-data-analytics-mastery", "python-for-data-analysis"],
+          courseIds: [],
         },
       },
       {
         type: "featuredScholarships",
         data: {
           title: "Latest Scholarships",
-          scholarshipSlugs: ["chevening-scholarship", "daad-scholarships"],
+          scholarshipIds: [],
         },
       },
       {
         type: "featuredBlogs",
         data: {
           title: "Career Articles",
-          blogSlugs: ["how-to-become-a-data-analyst-in-2026-complete-roadmap"],
+          blogPostIds: [],
         },
       },
     ],
@@ -201,11 +416,21 @@ const collection = {
     name: "Yaclam_API",
     _postman_id: "yaclam-cms-2026-0602",
     description:
-      "Yaclam CMS API — Auth, Settings, Pages, Home CMS blocks, Entities (fields, course, roadmaps, scholarships, practitioners, testimonials, why_yaclam, blog_post), cart, newsletter, role.",
+      "Yaclam CMS API (baseUrl {{baseUrl}}). Auth → CMS → entities. All lookups use getById (MongoDB id). Plural paths (e.g. /blog_posts) are aliases. Run Admin Login first to set accessToken.",
     schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
   },
   variable: variables,
   item: [
+    {
+      name: "Health",
+      item: [
+        req("GET", [], {
+          name: "Health check",
+          headers: [],
+          fullUrl: "http://localhost:9000/health",
+        }),
+      ],
+    },
     {
       name: "Auth",
       item: [
@@ -272,6 +497,28 @@ const collection = {
           name: "GetAll Students",
           headers: [authHeader],
           query: paginationQuery(),
+        }),
+        req("GET", "users/getById/{{userId}}", {
+          name: "Get User ById",
+          headers: [authHeader],
+        }),
+        req("PATCH", "users/admin/update/{{userId}}", {
+          name: "Update Admin",
+          headers: [jsonHeader, authHeader],
+          body: JSON.stringify(
+            { profile: { full_name: "Updated Admin Name" }, phone: "+252000000000" },
+            null,
+            2
+          ),
+        }),
+        req("PATCH", "users/status/{{userId}}", {
+          name: "Update User Status",
+          headers: [jsonHeader, authHeader],
+          body: JSON.stringify({ status: true }, null, 2),
+        }),
+        req("DELETE", "users/soft-delete/{{userId}}", {
+          name: "Soft Delete User",
+          headers: [authHeader],
         }),
       ],
     },
@@ -450,23 +697,30 @@ const collection = {
       createEvent: saveIdTest("homeSectionsId"),
       statusBody: null,
     }),
-    entityFolder("fields", "fieldId", {
+    entityFolder("field", "fieldId", {
       folderName: "Fields",
-      includeSlug: false,
+      publicGetById: true,
+      extraGetAll: [
+        req("GET", "field/getAllFieldByCourse", {
+          name: "GetAllFieldByCourse (public)",
+          headers: [],
+        }),
+      ],
       createBody: JSON.stringify(
         {
           name: "Data Science",
-          slug: "data-science",
           description: "Data analysis and machine learning tracks.",
           icon: "chart-bar",
           sortOrder: 1,
+          isVisible: true,
         },
         null,
         2
       ),
       updateBody: JSON.stringify({ description: "Updated field description" }, null, 2),
       createEvent: saveIdTest("fieldId"),
-      statusBody: null,
+      statusPath: "updateStatus",
+      statusBody: JSON.stringify({ isVisible: false }, null, 2),
     }),
     entityFolder("why_yaclam", "whyYaclamId", {
       folderName: "Why Yaclam",
@@ -486,9 +740,16 @@ const collection = {
       createEvent: saveIdTest("whyYaclamId"),
       statusBody: null,
     }),
-    entityFolder("practitioners", "practitionerId", {
+    entityFolder("practitioner", "practitionerId", {
       folderName: "Practitioners",
-      includeSlug: false,
+      publicGetById: true,
+      extraGetAll: [
+        req("GET", "practitioner/getAll", {
+          name: "GetAll (visible only)",
+          query: [...paginationQuery(), { key: "isVisible", value: "true" }],
+          headers: [],
+        }),
+      ],
       createBody: JSON.stringify(
         {
           initials: "MA",
@@ -504,11 +765,16 @@ const collection = {
       ),
       updateBody: JSON.stringify({ coursesCount: 7 }, null, 2),
       createEvent: saveIdTest("practitionerId"),
-      statusBody: null,
+      statusBody: JSON.stringify({ isVisible: true }, null, 2),
     }),
-    entityFolder("testimonials", "testimonialId", {
+    entityFolder("practitioners", "practitionerId", {
+      folderName: "Practitioners (alias /practitioners)",
+      aliasOnly: true,
+      publicGetById: true,
+    }),
+    entityFolder("testimonial", "testimonialId", {
       folderName: "Testimonials",
-      includeSlug: false,
+      publicGetById: true,
       createBody: JSON.stringify(
         {
           description:
@@ -524,42 +790,31 @@ const collection = {
       ),
       updateBody: JSON.stringify({ location: "Dublin, Ireland" }, null, 2),
       createEvent: saveIdTest("testimonialId"),
-      statusBody: null,
+      statusBody: JSON.stringify({ isVisible: true }, null, 2),
     }),
-    entityFolder("course", "courseId", {
-      folderName: "Course",
-      slugExample: "power-bi-data-analytics-mastery",
-      createBody: JSON.stringify(
-        {
-          title: "New Course",
-          slug: "new-course",
-          description: "Course description",
-          level: "Beginner",
-          duration: "8 weeks",
-          thumbnail: "",
-          fieldId: "{{fieldId}}",
-          price: 25,
-        },
-        null,
-        2
-      ),
-      updateBody: JSON.stringify({ price: 30, level: "Intermediate", fieldId: "{{fieldId}}" }, null, 2),
-      statusBody: JSON.stringify({ status: true }, null, 2),
-      createEvent: saveIdTest("courseId"),
+    entityFolder("testimonials", "testimonialId", {
+      folderName: "Testimonials (alias /testimonials)",
+      aliasOnly: true,
+      publicGetById: true,
     }),
+    courseFolder(),
     entityFolder("scholarship", "scholarshipId", {
       folderName: "Scholarship",
-      slugExample: "chevening-scholarship",
+      publicGetById: true,
       createBody: JSON.stringify(
         {
           name: "New Scholarship",
-          slug: "new-scholarship",
           provider: "Provider",
           country: "Global",
           level: "Masters",
           funding: "Full",
           flag: "🌍",
           deadline: "Jan 2027",
+          overview: "Scholarship overview text.",
+          benefits: ["Full tuition", "Living stipend"],
+          eligibility: ["Open to all nationalities"],
+          documents: ["CV", "Motivation letter"],
+          website: "https://example.com",
         },
         null,
         2
@@ -568,19 +823,91 @@ const collection = {
       statusBody: JSON.stringify({ status: true }, null, 2),
       createEvent: saveIdTest("scholarshipId"),
     }),
-    entityFolder("blog_post", "blogPostId", {
-      folderName: "BlogPost",
-      slugExample: "how-to-become-a-data-analyst-in-2026-complete-roadmap",
+    entityFolder("fields", "fieldId", {
+      folderName: "Fields (alias /fields)",
+      aliasOnly: true,
+      publicGetById: true,
+    }),
+    entityFolder("scholarships", "scholarshipId", {
+      folderName: "Scholarships (alias /scholarships)",
+      aliasOnly: true,
+      publicGetById: true,
+    }),
+    entityFolder("scholarship_cms", "scholarshipCmsId", {
+      folderName: "Scholarship CMS",
       createBody: JSON.stringify(
         {
-          title: "New Blog Post",
-          slug: "new-blog-post",
-          excerpt: "Short excerpt",
-          content: "Full content",
-          category: "Careers",
-          authorName: "Yaclam Team",
-          readTime: 5,
-          publishedDate: "2026-06-01",
+          headerText: "Scholarship Portal",
+          title: "Scholarship Portal",
+          subtitle:
+            "Funded study opportunities worldwide — eligibility, benefits and deadlines, explained for Somali applicants.",
+          emptyStateText: "No scholarships found.",
+        },
+        null,
+        2
+      ),
+      updateBody: JSON.stringify(
+        { subtitle: "Updated scholarship portal subtitle." },
+        null,
+        2
+      ),
+      createEvent: saveIdTest("scholarshipCmsId"),
+      statusBody: null,
+    }),
+    entityFolder("blog_category", "blogCategoryId", {
+      folderName: "Blog Category",
+      publicGetById: true,
+      createBody: JSON.stringify(
+        {
+          name: "Careers",
+          description: "Career guides and roadmaps",
+          color: "#C9A84C",
+          sortOrder: 0,
+        },
+        null,
+        2
+      ),
+      updateBody: JSON.stringify({ description: "Updated category" }, null, 2),
+      createEvent: saveIdTest("blogCategoryId"),
+      statusBody: JSON.stringify({ isVisible: true }, null, 2),
+    }),
+    entityFolder("blog_categories", "blogCategoryId", {
+      folderName: "Blog Categories (alias /blog_categories)",
+      aliasOnly: true,
+      publicGetById: true,
+    }),
+    entityFolder("blog_post", "blogPostId", {
+      folderName: "Blog Post",
+      publicGetById: true,
+      extraGetAll: [
+        req("GET", "blog_post/getAll", {
+          name: "GetAll by categoryId",
+          query: [
+            ...paginationQuery(),
+            { key: "categoryId", value: "{{blogCategoryId}}" },
+          ],
+          headers: [],
+        }),
+        req("GET", "blog_post/getAll", {
+          name: "GetAll (admin drafts)",
+          query: [
+            ...paginationQuery(),
+            { key: "includeDrafts", value: "true" },
+          ],
+          headers: [authHeader],
+        }),
+      ],
+      createBody: JSON.stringify(
+        {
+          title: "How AI Is Changing the Job Market (And What to Do)",
+          categoryId: "{{blogCategoryId}}",
+          excerpt: "AI will not replace you, but someone using AI well might.",
+          body: [
+            "The fear that AI will eliminate all jobs is overblown, but the disruption is real.",
+            "The winners learn to direct AI while focusing on judgement and relationships.",
+          ],
+          readTime: 9,
+          publishedDate: "2026-02-25",
           status: "published",
         },
         null,
@@ -590,15 +917,27 @@ const collection = {
       statusBody: JSON.stringify({ status: "published" }, null, 2),
       createEvent: saveIdTest("blogPostId"),
     }),
+    entityFolder("blog_posts", "blogPostId", {
+      folderName: "Blog Posts (alias /blog_posts)",
+      aliasOnly: true,
+      publicGetById: true,
+    }),
     entityFolder("roadmap", "roadmapId", {
       folderName: "Roadmap",
-      slugExample: "data-analyst",
+      publicGetById: true,
       createBody: JSON.stringify(
         {
           title: "Data Analyst",
-          slug: "data-analyst",
-          description: "Path to becoming a data analyst",
-          skills: ["Excel", "SQL", "Power BI"],
+          description: "Turn raw data into business decisions.",
+          icon: "BarChart3",
+          demand: "Very High",
+          salary: "€38k–€58k",
+          months: 8,
+          skills: ["Excel", "SQL", "Power BI", "Python", "Statistics"],
+          steps: [
+            { title: "Foundations", detail: "Spreadsheets and statistics.", order: 0 },
+            { title: "Core skills", detail: "SQL and clean workflows.", order: 1 },
+          ],
         },
         null,
         2
@@ -606,6 +945,32 @@ const collection = {
       updateBody: JSON.stringify({ description: "Updated roadmap" }, null, 2),
       statusBody: JSON.stringify({ status: true }, null, 2),
       createEvent: saveIdTest("roadmapId"),
+    }),
+    entityFolder("roadmaps", "roadmapId", {
+      folderName: "Roadmaps (alias /roadmaps)",
+      aliasOnly: true,
+      publicGetById: true,
+    }),
+    entityFolder("footer", "footerId", {
+      folderName: "Footer",
+      skipDelete: true,
+      createBody: JSON.stringify(
+        {
+          tagline: "Made for the Somali ummah",
+          columns: [
+            {
+              title: "Learn",
+              links: [{ label: "Courses", url: "/courses", isVisible: true }],
+              isVisible: true,
+            },
+          ],
+        },
+        null,
+        2
+      ),
+      updateBody: JSON.stringify({ tagline: "Updated tagline" }, null, 2),
+      createEvent: saveIdTest("footerId"),
+      statusBody: null,
     }),
     {
       name: "Cart",
@@ -665,20 +1030,30 @@ const collection = {
 };
 
 const preferredOrder = [
+  "Health",
+  "Auth",
+  "Settings",
+  "Pages",
   "Home CMS",
   "Home Sections CMS",
+  "Footer",
   "Why Yaclam",
   "Fields",
   "Course Page CMS",
   "Course",
+  "Blog Category",
+  "Blog Categories (alias)",
+  "Blog Post",
+  "Blog Posts (alias /blog_posts)",
   "Roadmap",
+  "Roadmaps (alias /roadmaps)",
   "Scholarship",
+  "Scholarships (alias /scholarships)",
+  "Scholarship CMS",
   "Practitioners",
+  "Practitioners (alias /practitioners)",
   "Testimonials",
-  "BlogPost",
-  "Pages",
-  "Settings",
-  "Auth",
+  "Testimonials (alias /testimonials)",
   "Cart",
   "Newsletter",
   "Role",

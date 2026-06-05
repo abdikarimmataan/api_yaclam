@@ -6,7 +6,7 @@ const sectionSchema = Joi.object({
 });
 
 const updateSchema = Joi.object({
-  slug: Joi.string().optional(),
+  path: Joi.string().optional(),
   title: Joi.string().allow("").optional(),
   status: Joi.string().valid("draft", "published").optional(),
   sections: Joi.array().items(sectionSchema).optional(),
