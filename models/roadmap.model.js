@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { toJSON } = require("../utilities/toJson.utility");
+const { formatTimeToJobReadyDisplay } = require("../utilities/roadmap.utility");
 
 const learningPathStepSchema = new mongoose.Schema(
   {
@@ -24,6 +25,7 @@ const roadmapSchema = new mongoose.Schema(
     },
     salary: { type: String, default: "" },
     months: { type: Number, default: 0 },
+    timeToJobReady: { type: String, default: "" },
     skillsRequired: { type: Number, default: 0 },
     steps: { type: [learningPathStepSchema], default: [] },
     ctaButton: {
@@ -44,7 +46,14 @@ roadmapSchema.pre("save", function syncSkillsRequired(next) {
   if (Array.isArray(this.skills) && (!this.skillsRequired || this.isModified("skills"))) {
     this.skillsRequired = this.skills.length;
   }
+  if (this.timeToJobReady) {
+    this.months = undefined;
+  }
   next();
+});
+
+roadmapSchema.virtual("timeToJobReadyDisplay").get(function () {
+  return formatTimeToJobReadyDisplay(this.timeToJobReady);
 });
 
 roadmapSchema.plugin(toJSON);

@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const { DEMAND_LEVELS } = require("../utilities/roadmap.utility");
+const { DEMAND_LEVELS, normalizeTimeToJobReadyDate } = require("../utilities/roadmap.utility");
 
 const stepSchema = Joi.object({
   title: Joi.string().allow("").optional(),
@@ -28,7 +28,21 @@ const baseFields = {
   salary: Joi.string().allow("").optional(),
   salaryRange: Joi.string().allow("").optional(),
   months: Joi.number().min(0).optional(),
-  timeToJobReady: Joi.number().min(0).optional(),
+  timeToJobReady: Joi.string()
+    .trim()
+    .allow("")
+    .optional()
+    .custom((value, helpers) => {
+      if (!value) return value;
+      const normalized = normalizeTimeToJobReadyDate(value);
+      if (normalized === null) {
+        return helpers.error("any.invalid");
+      }
+      return normalized;
+    })
+    .messages({
+      "any.invalid": "timeToJobReady must be a valid date (e.g. 2026/Dec/20 or 2026/12/20)",
+    }),
   timeToJobReadyMonths: Joi.number().min(0).optional(),
   skillsRequired: Joi.number().min(0).optional(),
   skillsRequiredCount: Joi.number().min(0).optional(),
@@ -37,7 +51,7 @@ const baseFields = {
   ctaButton: ctaButtonSchema.optional(),
   isPublished: Joi.boolean().optional(),
   isVisible: Joi.boolean().optional(),
-  sortOrder: Joi.number().optional(),
+  sortOrder: Joi.number().integer().min(0).optional(),
   status: Joi.boolean().optional(),
 };
 

@@ -3,7 +3,6 @@ const { toJSON } = require("../utilities/toJson.utility");
 
 const scholarshipCmsSchema = new mongoose.Schema(
   {
-    headerText: { type: String, default: "Scholarship Portal" },
     title: { type: String, default: "Scholarship Portal" },
     subtitle: {
       type: String,

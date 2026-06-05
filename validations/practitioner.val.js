@@ -10,7 +10,7 @@ const baseFields = {
   studentsCount: Joi.string().allow("").optional(),
   students: Joi.string().allow("").optional(),
   color: Joi.string().allow("").optional(),
-  sortOrder: Joi.number().optional(),
+  sortOrder: Joi.number().integer().min(0).optional(),
   isVisible: Joi.boolean().optional(),
 };
 

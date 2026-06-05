@@ -9,7 +9,7 @@ const baseFields = {
   name: Joi.string().trim().min(1),
   role: Joi.string().allow("").optional(),
   location: Joi.string().allow("").optional(),
-  sortOrder: Joi.number().optional(),
+  sortOrder: Joi.number().integer().min(0).optional(),
   isVisible: Joi.boolean().optional(),
 };
 

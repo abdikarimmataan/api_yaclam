@@ -3,7 +3,7 @@ const { toJSON } = require("../utilities/toJson.utility");
 
 const scholarshipSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true, unique: true },
+    name: { type: String, required: true, trim: true },
     title: { type: String, trim: true },
     provider: { type: String, default: "" },
     country: { type: String, default: "" },
@@ -14,7 +14,7 @@ const scholarshipSchema = new mongoose.Schema(
       default: "Full",
     },
     flag: { type: String, default: "" },
-    deadline: { type: String, default: "" },
+    deadline: { type: Date, default: null },
     amount: { type: String, default: "" },
     website: { type: String, default: "" },
     overview: { type: String, default: "" },
@@ -38,6 +38,11 @@ const scholarshipSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
+scholarshipSchema.index(
+  { name: 1 },
+  { unique: true, partialFilterExpression: { del_status: "Live" } }
+);
+
 scholarshipSchema.pre("save", function syncScholarshipFields(next) {
   if (this.name && !this.title) this.title = this.name;
   if (!this.name && this.title) this.name = this.title;
@@ -52,4 +57,35 @@ scholarshipSchema.pre("save", function syncScholarshipFields(next) {
 });
 
 scholarshipSchema.plugin(toJSON);
-module.exports = mongoose.model("Scholarship", scholarshipSchema, "scholarships");
+
+const Scholarship = mongoose.model("Scholarship", scholarshipSchema, "scholarships");
+
+async function syncScholarshipNameIndex() {
+  if (mongoose.connection.readyState !== 1) return;
+
+  const collection = mongoose.connection.collection("scholarships");
+  try {
+    const indexes = await collection.indexes();
+    for (const index of indexes) {
+      if (index.key?.name === 1 && !index.partialFilterExpression) {
+        await collection.dropIndex(index.name);
+      }
+    }
+  } catch (_) {
+    // legacy index may already be removed
+  }
+
+  try {
+    await Scholarship.syncIndexes();
+  } catch (_) {
+    // index sync can fail if duplicates exist among Live records
+  }
+}
+
+if (mongoose.connection.readyState === 1) {
+  syncScholarshipNameIndex();
+} else {
+  mongoose.connection.once("connected", syncScholarshipNameIndex);
+}
+
+module.exports = Scholarship;

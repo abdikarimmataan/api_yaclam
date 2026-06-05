@@ -6,6 +6,7 @@ const sectionTextSchema = new mongoose.Schema(
     eyebrow: { type: String, default: "" },
     title: { type: String, default: "" },
     subtitle: { type: String, default: "" },
+    cardNumberVisible: { type: Number, default: 5, min: 0 },
     isVisible: { type: Boolean, default: true },
   },
   { _id: false }
@@ -25,6 +26,7 @@ const featuredCoursesSectionSchema = new mongoose.Schema(
     eyebrow: { type: String, default: "" },
     title: { type: String, default: "" },
     subtitle: { type: String, default: "" },
+    cardNumberVisible: { type: Number, default: 5, min: 0 },
     isVisible: { type: Boolean, default: true },
     viewAllButton: {
       type: sectionButtonSchema,
@@ -39,6 +41,7 @@ const roadmapsSectionSchema = new mongoose.Schema(
     eyebrow: { type: String, default: "" },
     title: { type: String, default: "" },
     subtitle: { type: String, default: "" },
+    cardNumberVisible: { type: Number, default: 5, min: 0 },
     isVisible: { type: Boolean, default: true },
     allRoadmapsButton: {
       type: sectionButtonSchema,
@@ -53,6 +56,7 @@ const scholarshipsSectionSchema = new mongoose.Schema(
     eyebrow: { type: String, default: "" },
     title: { type: String, default: "" },
     subtitle: { type: String, default: "" },
+    cardNumberVisible: { type: Number, default: 5, min: 0 },
     isVisible: { type: Boolean, default: true },
     browseAllButton: {
       type: sectionButtonSchema,

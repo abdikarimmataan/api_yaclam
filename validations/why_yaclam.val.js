@@ -4,7 +4,7 @@ const createSchema = Joi.object({
   icon: Joi.string().allow("").optional(),
   title: Joi.string().required(),
   description: Joi.string().required(),
-  sortOrder: Joi.number().optional(),
+  sortOrder: Joi.number().integer().min(0).optional(),
   isVisible: Joi.boolean().optional(),
 });
 

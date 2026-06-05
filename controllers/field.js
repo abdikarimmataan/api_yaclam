@@ -7,14 +7,38 @@ const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
 
+async function findLiveFieldByExactName(name, excludeId = null) {
+  const trimmedName = name.trim();
+  const filter = { del_status: "Live", name: trimmedName };
+  if (excludeId) filter._id = { $ne: excludeId };
+  return Field.findOne(filter);
+}
+
+async function getNextFieldSortOrder() {
+  const last = await Field.findOne({ del_status: "Live" }).sort({ sortOrder: -1 }).select("sortOrder").lean();
+  if (!last) return 1;
+  return (last.sortOrder ?? 0) + 1;
+}
+
 module.exports = {
   create: async (req, res) => {
     try {
-      const doc = new Field(req.body);
+      const { name } = req.body;
+
+      const existing = await findLiveFieldByExactName(name);
+      if (existing) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+
+      const sortOrder =
+        req.body.sortOrder != null && Number.isFinite(Number(req.body.sortOrder))
+          ? Math.max(0, Math.trunc(Number(req.body.sortOrder)))
+          : await getNextFieldSortOrder();
+      const doc = new Field({ ...req.body, sortOrder });
       const saved = await doc.save();
       return Response.successResponse(res, 201, saved);
     } catch (err) {
-      if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      if (err?.code === 11000 && err?.keyPattern?.name) {
+        return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      }
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
@@ -111,11 +135,18 @@ module.exports = {
       const doc = await Field.findOne({ _id: id, del_status: "Live" });
       if (!doc) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
 
+      if (req.body.name) {
+        const duplicate = await findLiveFieldByExactName(req.body.name, id);
+        if (duplicate) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      }
+
       Object.assign(doc, req.body);
       const updated = await doc.save();
       return Response.successResponse(res, 200, updated);
     } catch (err) {
-      if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      if (err?.code === 11000 && err?.keyPattern?.name) {
+        return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
+      }
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
