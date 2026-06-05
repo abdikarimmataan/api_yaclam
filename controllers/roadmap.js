@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { isValidObjectId } = mongoose;
 
 const Roadmap = require("../models/roadmap.model");
+const { buildRoadmapPayload } = require("../utilities/roadmap.utility");
 const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
@@ -9,7 +10,7 @@ const PaginationUtility = require("../utilities/pagination_utility.js");
 module.exports = {
   create: async (req, res) => {
     try {
-      const roadmap = new Roadmap(req.body);
+      const roadmap = new Roadmap(buildRoadmapPayload(req.body));
       const saved = await roadmap.save();
       return Response.successResponse(res, 201, saved);
     } catch (err) {
@@ -67,19 +68,6 @@ module.exports = {
     }
   },
 
-  getBySlug: async (req, res) => {
-    try {
-      const roadmap = await Roadmap.findOne({
-        slug: req.params.slug.toLowerCase(),
-        del_status: "Live",
-      });
-      if (!roadmap) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
-      return Response.successResponse(res, 200, roadmap);
-    } catch (err) {
-      return Response.errorResponse(res, 500, err.message || err);
-    }
-  },
-
   update: async (req, res) => {
     try {
       const { id } = req.params;
@@ -90,7 +78,7 @@ module.exports = {
       const roadmap = await Roadmap.findOne({ _id: id, del_status: "Live" });
       if (!roadmap) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
 
-      Object.assign(roadmap, req.body);
+      Object.assign(roadmap, buildRoadmapPayload(req.body));
       const updated = await roadmap.save();
       return Response.successResponse(res, 200, updated);
     } catch (err) {

@@ -10,7 +10,7 @@ const pageSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    slug: { type: String, required: true, trim: true },
+    path: { type: String, required: true, trim: true },
     title: { type: String, default: "" },
     status: { type: String, enum: ["draft", "published"], default: "published" },
     sections: { type: [mongoose.Schema.Types.Mixed], default: [] },

@@ -2,7 +2,7 @@
   "info": {
     "name": "Yaclam_API",
     "_postman_id": "yaclam-cms-2026-0602",
-    "description": "Yaclam CMS API — Auth, Settings, Pages, Home CMS blocks, Entities (fields, course, roadmaps, scholarships, practitioners, testimonials, why_yaclam, blog_post), cart, newsletter, role.",
+    "description": "Yaclam CMS API (baseUrl {{baseUrl}}). Auth → CMS → entities. All lookups use getById (MongoDB id). Plural paths (e.g. /blog_posts) are aliases. Run Admin Login first to set accessToken.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -63,7 +63,19 @@
       "value": ""
     },
     {
+      "key": "scholarshipCmsId",
+      "value": ""
+    },
+    {
+      "key": "blogCategoryId",
+      "value": ""
+    },
+    {
       "key": "blogPostId",
+      "value": ""
+    },
+    {
+      "key": "footerId",
       "value": ""
     },
     {
@@ -73,2089 +85,15 @@
   ],
   "item": [
     {
-      "name": "Home CMS",
+      "name": "Health",
       "item": [
         {
-          "name": "GetAll (public)",
+          "name": "Health check",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/home/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home",
-                "getAll"
-              ]
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('homeId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/home/getById/{{homeId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home",
-                "getById",
-                "{{homeId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/home/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"heroVerseArabic\": \"قُلْ هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ\",\n  \"heroVerseTranslation\": \"Are those who know equal to those who do not know?\",\n  \"heroTitle\": \"Learn Skills. Build Careers. Create Opportunities.\",\n  \"heroSubtitle\": \"Master practical skills, earn certificates, discover scholarships, and advance your career through expert-led Somali-language education.\",\n  \"heroPrimaryButton\": {\n    \"label\": \"Start Learning\",\n    \"url\": \"/register\",\n    \"isVisible\": true\n  },\n  \"heroSecondaryButton\": {\n    \"label\": \"Explore Courses\",\n    \"url\": \"/courses\",\n    \"isVisible\": true\n  }\n}"
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/home/update/{{homeId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home",
-                "update",
-                "{{homeId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"featuredCoursesBadgeText\": \"Popular\",\n  \"featuredCoursesTitle\": \"Featured courses\",\n  \"featuredCoursesSubtitle\": \"Hand-picked, top-rated programmes loved by thousands of learners.\"\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/home/delete/{{homeId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home",
-                "delete",
-                "{{homeId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Home Sections CMS",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/home_sections/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home_sections",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fieldSection\": {\n    \"eyebrow\": \"Browse\",\n    \"title\": \"Find your field\",\n    \"subtitle\": \"Explore practical, job-ready skills across the disciplines that matter most.\"\n  },\n  \"featuredCoursesSection\": {\n    \"eyebrow\": \"Popular\",\n    \"title\": \"Featured courses\",\n    \"subtitle\": \"Hand-picked, top-rated programmes loved by thousands of learners.\"\n  },\n  \"whyYaclamSection\": {\n    \"eyebrow\": \"Why Yaclam\",\n    \"title\": \"Education built for you\",\n    \"subtitle\": \"Everything you need to learn, get certified and move your career forward.\"\n  },\n  \"ctaSection\": {\n    \"title\": \"Your future is one decision away\",\n    \"subtitle\": \"Join thousands of Somali learners building skills, earning certificates and changing their lives. Start free today.\",\n    \"primaryButtonText\": \"Create free account\",\n    \"primaryButtonUrl\": \"/register\",\n    \"secondaryButtonText\": \"Browse courses\",\n    \"secondaryButtonUrl\": \"/courses\"\n  }\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('homeSectionsId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/home_sections/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home_sections",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/home_sections/getById/{{homeSectionsId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home_sections",
-                "getById",
-                "{{homeSectionsId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/home_sections/update/{{homeSectionsId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home_sections",
-                "update",
-                "{{homeSectionsId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"practitionersSection\": {\n    \"eyebrow\": \"Expert-led\",\n    \"title\": \"Learn from practitioners\",\n    \"subtitle\": \"Our instructors teach what they actually do — no theory without practice.\"\n  },\n  \"testimonialsSection\": {\n    \"eyebrow\": \"Learners\",\n    \"title\": \"Real outcomes\",\n    \"subtitle\": \"From first lesson to first job offer — here is what learners say.\"\n  }\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/home_sections/delete/{{homeSectionsId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "home_sections",
-                "delete",
-                "{{homeSectionsId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Why Yaclam",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/why_yaclam/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "why_yaclam",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"icon\": \"Globe\",\n  \"title\": \"Learn in Somali\",\n  \"description\": \"Complex skills explained in your mother tongue, with English technical terms — the way you actually understand best.\",\n  \"sortOrder\": 1\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('whyYaclamId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/why_yaclam/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "why_yaclam",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/why_yaclam/getById/{{whyYaclamId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "why_yaclam",
-                "getById",
-                "{{whyYaclamId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/why_yaclam/update/{{whyYaclamId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "why_yaclam",
-                "update",
-                "{{whyYaclamId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Verified Certificates\"\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/why_yaclam/delete/{{whyYaclamId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "why_yaclam",
-                "delete",
-                "{{whyYaclamId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Fields",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/fields/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "fields",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Data Science\",\n  \"slug\": \"data-science\",\n  \"description\": \"Data analysis and machine learning tracks.\",\n  \"icon\": \"chart-bar\",\n  \"sortOrder\": 1\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('fieldId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/fields/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "fields",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/fields/getById/{{fieldId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "fields",
-                "getById",
-                "{{fieldId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/fields/update/{{fieldId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "fields",
-                "update",
-                "{{fieldId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"description\": \"Updated field description\"\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/fields/delete/{{fieldId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "fields",
-                "delete",
-                "{{fieldId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Course Page CMS",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/courses/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "courses",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"headerText\": \"Explore Courses\",\n  \"title\": \"Explore Courses\",\n  \"subtitle\": \"Practical, job-ready skills taught in Somali. Filter by topic, price and level to find your next course.\"\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('coursesPageId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/courses/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "courses",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/courses/getById/{{coursesPageId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "courses",
-                "getById",
-                "{{coursesPageId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/courses/update/{{coursesPageId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "courses",
-                "update",
-                "{{coursesPageId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Explore Courses\"\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/courses/delete/{{coursesPageId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "courses",
-                "delete",
-                "{{coursesPageId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Course",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/course/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "course",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"New Course\",\n  \"slug\": \"new-course\",\n  \"description\": \"Course description\",\n  \"level\": \"Beginner\",\n  \"duration\": \"8 weeks\",\n  \"thumbnail\": \"\",\n  \"fieldId\": \"{{fieldId}}\",\n  \"price\": 25\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('courseId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/course/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "course",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetBySlug",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/course/power-bi-data-analytics-mastery",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "course",
-                "power-bi-data-analytics-mastery"
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/course/getById/{{courseId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "course",
-                "getById",
-                "{{courseId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/course/update/{{courseId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "course",
-                "update",
-                "{{courseId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"price\": 30,\n  \"level\": \"Intermediate\",\n  \"fieldId\": \"{{fieldId}}\"\n}"
-            }
-          }
-        },
-        {
-          "name": "UpdateStatus",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/course/status/{{courseId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "course",
-                "status",
-                "{{courseId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": true\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/course/delete/{{courseId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "course",
-                "delete",
-                "{{courseId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Roadmap",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/roadmap/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "roadmap",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Data Analyst\",\n  \"slug\": \"data-analyst\",\n  \"description\": \"Path to becoming a data analyst\",\n  \"skills\": [\n    \"Excel\",\n    \"SQL\",\n    \"Power BI\"\n  ]\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('roadmapId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/roadmap/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "roadmap",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetBySlug",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/roadmap/data-analyst",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "roadmap",
-                "data-analyst"
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/roadmap/getById/{{roadmapId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "roadmap",
-                "getById",
-                "{{roadmapId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/roadmap/update/{{roadmapId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "roadmap",
-                "update",
-                "{{roadmapId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"description\": \"Updated roadmap\"\n}"
-            }
-          }
-        },
-        {
-          "name": "UpdateStatus",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/roadmap/status/{{roadmapId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "roadmap",
-                "status",
-                "{{roadmapId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": true\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/roadmap/delete/{{roadmapId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "roadmap",
-                "delete",
-                "{{roadmapId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Scholarship",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/scholarship/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "scholarship",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"New Scholarship\",\n  \"slug\": \"new-scholarship\",\n  \"provider\": \"Provider\",\n  \"country\": \"Global\",\n  \"level\": \"Masters\",\n  \"funding\": \"Full\",\n  \"flag\": \"🌍\",\n  \"deadline\": \"Jan 2027\"\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('scholarshipId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/scholarship/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "scholarship",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetBySlug",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/scholarship/chevening-scholarship",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "scholarship",
-                "chevening-scholarship"
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/scholarship/getById/{{scholarshipId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "scholarship",
-                "getById",
-                "{{scholarshipId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/scholarship/update/{{scholarshipId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "scholarship",
-                "update",
-                "{{scholarshipId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"funding\": \"Partial\"\n}"
-            }
-          }
-        },
-        {
-          "name": "UpdateStatus",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/scholarship/status/{{scholarshipId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "scholarship",
-                "status",
-                "{{scholarshipId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": true\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/scholarship/delete/{{scholarshipId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "scholarship",
-                "delete",
-                "{{scholarshipId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Practitioners",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/practitioners/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "practitioners",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"initials\": \"MA\",\n  \"name\": \"Eng. Mohamud Ali\",\n  \"role\": \"Software Engineering\",\n  \"coursesCount\": 6,\n  \"studentsCount\": \"4.6k\",\n  \"color\": \"#1D4ED8\",\n  \"sortOrder\": 1\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('practitionerId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/practitioners/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "practitioners",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/practitioners/getById/{{practitionerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "practitioners",
-                "getById",
-                "{{practitionerId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/practitioners/update/{{practitionerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "practitioners",
-                "update",
-                "{{practitionerId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"coursesCount\": 7\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/practitioners/delete/{{practitionerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "practitioners",
-                "delete",
-                "{{practitionerId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Testimonials",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/testimonials/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "testimonials",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"description\": \"I learned Power BI in Somali first, then practised in English. Within five months I landed my first analyst role. Yaclam made it feel possible.\",\n  \"initials\": \"HA\",\n  \"name\": \"Hodan A.\",\n  \"role\": \"Data Analyst\",\n  \"location\": \"Dublin\",\n  \"sortOrder\": 1\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('testimonialId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/testimonials/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "testimonials",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/testimonials/getById/{{testimonialId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "testimonials",
-                "getById",
-                "{{testimonialId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/testimonials/update/{{testimonialId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "testimonials",
-                "update",
-                "{{testimonialId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"location\": \"Dublin, Ireland\"\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/testimonials/delete/{{testimonialId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "testimonials",
-                "delete",
-                "{{testimonialId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "BlogPost",
-      "item": [
-        {
-          "name": "Create",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/blog_post/create",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "blog_post",
-                "create"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"New Blog Post\",\n  \"slug\": \"new-blog-post\",\n  \"excerpt\": \"Short excerpt\",\n  \"content\": \"Full content\",\n  \"category\": \"Careers\",\n  \"authorName\": \"Yaclam Team\",\n  \"readTime\": 5,\n  \"publishedDate\": \"2026-06-01\",\n  \"status\": \"published\"\n}"
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('blogPostId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "GetAll",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/blog_post/getAll",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "blog_post",
-                "getAll"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "10"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetBySlug",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/blog_post/how-to-become-a-data-analyst-in-2026-complete-roadmap",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "blog_post",
-                "how-to-become-a-data-analyst-in-2026-complete-roadmap"
-              ]
-            }
-          }
-        },
-        {
-          "name": "GetById",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/blog_post/getById/{{blogPostId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "blog_post",
-                "getById",
-                "{{blogPostId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/blog_post/update/{{blogPostId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "blog_post",
-                "update",
-                "{{blogPostId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Post\"\n}"
-            }
-          }
-        },
-        {
-          "name": "UpdateStatus",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/blog_post/status/{{blogPostId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "blog_post",
-                "status",
-                "{{blogPostId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"published\"\n}"
-            }
-          }
-        },
-        {
-          "name": "Delete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/blog_post/delete/{{blogPostId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "blog_post",
-                "delete",
-                "{{blogPostId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Pages",
-      "item": [
-        {
-          "name": "Get Home (public)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/pages/home",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "pages",
-                "home"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get About (public)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/pages/about",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "pages",
-                "about"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Contact (public)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/pages/contact",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "pages",
-                "contact"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update Home",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/pages/home",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "pages",
-                "home"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"sections\": [\n    {\n      \"type\": \"hero\",\n      \"data\": {\n        \"title\": \"Learn Skills. Build Careers. Create Opportunities.\",\n        \"description\": \"Master practical skills through expert-led Somali-language education.\"\n      }\n    },\n    {\n      \"type\": \"featuredCourses\",\n      \"data\": {\n        \"title\": \"Featured Courses\",\n        \"courseSlugs\": [\n          \"power-bi-data-analytics-mastery\",\n          \"python-for-data-analysis\"\n        ]\n      }\n    },\n    {\n      \"type\": \"featuredScholarships\",\n      \"data\": {\n        \"title\": \"Latest Scholarships\",\n        \"scholarshipSlugs\": [\n          \"chevening-scholarship\",\n          \"daad-scholarships\"\n        ]\n      }\n    },\n    {\n      \"type\": \"featuredBlogs\",\n      \"data\": {\n        \"title\": \"Career Articles\",\n        \"blogSlugs\": [\n          \"how-to-become-a-data-analyst-in-2026-complete-roadmap\"\n        ]\n      }\n    }\n  ]\n}"
-            }
-          }
-        },
-        {
-          "name": "Update About",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/pages/about",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "pages",
-                "about"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"About Yaclam\",\n  \"sections\": [\n    {\n      \"type\": \"pageHeader\",\n      \"data\": {\n        \"title\": \"About Yaclam\",\n        \"subtitle\": \"Somalia's premier e-learning platform.\"\n      }\n    }\n  ]\n}"
-            }
-          }
-        },
-        {
-          "name": "Update Contact",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/pages/contact",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "pages",
-                "contact"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Contact\",\n  \"sections\": [\n    {\n      \"type\": \"pageHeader\",\n      \"data\": {\n        \"title\": \"Get in touch\",\n        \"subtitle\": \"We'd love to hear from you.\"\n      }\n    }\n  ]\n}"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Settings",
-      "item": [
-        {
-          "name": "Get (public)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/settings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "settings"
-              ]
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "type": "text/javascript",
-                  "exec": [
-                    "try {",
-                    "  const res = pm.response.json();",
-                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
-                    "  if (id) pm.collectionVariables.set('settingsId', id);",
-                    "} catch (e) {}"
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "Update",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/settings/update/{{settingsId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "settings",
-                "update",
-                "{{settingsId}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"siteName\": \"Yaclam\",\n  \"logo\": {\n    \"light\": \"/uploads/logo-light.svg\",\n    \"dark\": \"/uploads/logo-dark.svg\",\n    \"alt\": \"Yaclam\"\n  },\n  \"footer\": {\n    \"description\": \"Somalia's AI-powered learning platform.\",\n    \"copyright\": \"© 2026 Yaclam. All rights reserved.\"\n  }\n}"
+              "raw": "http://localhost:9000/health"
             }
           }
         }
@@ -2436,6 +374,3301 @@
                   "key": "pageSize",
                   "value": "10"
                 }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User ById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/getById/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "getById",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Admin",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/admin/update/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "admin",
+                "update",
+                "{{userId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"full_name\": \"Updated Admin Name\"\n  },\n  \"phone\": \"+252000000000\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/status/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "status",
+                "{{userId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Soft Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/soft-delete/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "soft-delete",
+                "{{userId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "Get (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "settings"
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('settingsId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/settings/update/{{settingsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "settings",
+                "update",
+                "{{settingsId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"siteName\": \"Yaclam\",\n  \"logo\": {\n    \"isVisible\": true,\n    \"text\": {\n      \"mark\": \"ي\",\n      \"name\": \"Yaclam\",\n      \"highlight\": \".\",\n      \"isVisible\": true\n    },\n    \"picture\": {\n      \"light\": \"/uploads/logo-light.svg\",\n      \"dark\": \"/uploads/logo-dark.svg\",\n      \"alt\": \"Yaclam\",\n      \"isVisible\": true\n    }\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pages",
+      "item": [
+        {
+          "name": "Get Home (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pages/home",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pages",
+                "home"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get About (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pages/about",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pages",
+                "about"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Contact (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pages/contact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pages",
+                "contact"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Home",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pages/home",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pages",
+                "home"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sections\": [\n    {\n      \"type\": \"hero\",\n      \"data\": {\n        \"title\": \"Learn Skills. Build Careers. Create Opportunities.\",\n        \"description\": \"Master practical skills through expert-led Somali-language education.\"\n      }\n    },\n    {\n      \"type\": \"featuredCourses\",\n      \"data\": {\n        \"title\": \"Featured Courses\",\n        \"courseIds\": []\n      }\n    },\n    {\n      \"type\": \"featuredScholarships\",\n      \"data\": {\n        \"title\": \"Latest Scholarships\",\n        \"scholarshipIds\": []\n      }\n    },\n    {\n      \"type\": \"featuredBlogs\",\n      \"data\": {\n        \"title\": \"Career Articles\",\n        \"blogPostIds\": []\n      }\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Update About",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pages/about",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pages",
+                "about"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"About Yaclam\",\n  \"sections\": [\n    {\n      \"type\": \"pageHeader\",\n      \"data\": {\n        \"title\": \"About Yaclam\",\n        \"subtitle\": \"Somalia's premier e-learning platform.\"\n      }\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Contact",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pages/contact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pages",
+                "contact"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Contact\",\n  \"sections\": [\n    {\n      \"type\": \"pageHeader\",\n      \"data\": {\n        \"title\": \"Get in touch\",\n        \"subtitle\": \"We'd love to hear from you.\"\n      }\n    }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Home CMS",
+      "item": [
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/home/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home",
+                "getAll"
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('homeId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/home/getById/{{homeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home",
+                "getById",
+                "{{homeId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/home/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"heroVerseArabic\": \"قُلْ هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ\",\n  \"heroVerseTranslation\": \"Are those who know equal to those who do not know?\",\n  \"heroTitle\": \"Learn Skills. Build Careers. Create Opportunities.\",\n  \"heroSubtitle\": \"Master practical skills, earn certificates, discover scholarships, and advance your career through expert-led Somali-language education.\",\n  \"heroPrimaryButton\": {\n    \"label\": \"Start Learning\",\n    \"url\": \"/register\",\n    \"isVisible\": true\n  },\n  \"heroSecondaryButton\": {\n    \"label\": \"Explore Courses\",\n    \"url\": \"/courses\",\n    \"isVisible\": true\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/home/update/{{homeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home",
+                "update",
+                "{{homeId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"featuredCoursesBadgeText\": \"Popular\",\n  \"featuredCoursesTitle\": \"Featured courses\",\n  \"featuredCoursesSubtitle\": \"Hand-picked, top-rated programmes loved by thousands of learners.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/home/delete/{{homeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home",
+                "delete",
+                "{{homeId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Home Sections CMS",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/home_sections/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home_sections",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fieldSection\": {\n    \"eyebrow\": \"Browse\",\n    \"title\": \"Find your field\",\n    \"subtitle\": \"Explore practical, job-ready skills across the disciplines that matter most.\"\n  },\n  \"featuredCoursesSection\": {\n    \"eyebrow\": \"Popular\",\n    \"title\": \"Featured courses\",\n    \"subtitle\": \"Hand-picked, top-rated programmes loved by thousands of learners.\"\n  },\n  \"whyYaclamSection\": {\n    \"eyebrow\": \"Why Yaclam\",\n    \"title\": \"Education built for you\",\n    \"subtitle\": \"Everything you need to learn, get certified and move your career forward.\"\n  },\n  \"ctaSection\": {\n    \"title\": \"Your future is one decision away\",\n    \"subtitle\": \"Join thousands of Somali learners building skills, earning certificates and changing their lives. Start free today.\",\n    \"primaryButtonText\": \"Create free account\",\n    \"primaryButtonUrl\": \"/register\",\n    \"secondaryButtonText\": \"Browse courses\",\n    \"secondaryButtonUrl\": \"/courses\"\n  }\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('homeSectionsId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/home_sections/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home_sections",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/home_sections/getById/{{homeSectionsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home_sections",
+                "getById",
+                "{{homeSectionsId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/home_sections/update/{{homeSectionsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home_sections",
+                "update",
+                "{{homeSectionsId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"practitionersSection\": {\n    \"eyebrow\": \"Expert-led\",\n    \"title\": \"Learn from practitioners\",\n    \"subtitle\": \"Our instructors teach what they actually do — no theory without practice.\"\n  },\n  \"testimonialsSection\": {\n    \"eyebrow\": \"Learners\",\n    \"title\": \"Real outcomes\",\n    \"subtitle\": \"From first lesson to first job offer — here is what learners say.\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/home_sections/delete/{{homeSectionsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "home_sections",
+                "delete",
+                "{{homeSectionsId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Footer",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/footer/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "footer",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tagline\": \"Made for the Somali ummah\",\n  \"columns\": [\n    {\n      \"title\": \"Learn\",\n      \"links\": [\n        {\n          \"label\": \"Courses\",\n          \"url\": \"/courses\",\n          \"isVisible\": true\n        }\n      ],\n      \"isVisible\": true\n    }\n  ]\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('footerId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/footer/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "footer",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/footer/getById/{{footerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "footer",
+                "getById",
+                "{{footerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/footer/update/{{footerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "footer",
+                "update",
+                "{{footerId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tagline\": \"Updated tagline\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Why Yaclam",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/why_yaclam/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "why_yaclam",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"icon\": \"Globe\",\n  \"title\": \"Learn in Somali\",\n  \"description\": \"Complex skills explained in your mother tongue, with English technical terms — the way you actually understand best.\",\n  \"sortOrder\": 1\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('whyYaclamId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/why_yaclam/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "why_yaclam",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/why_yaclam/getById/{{whyYaclamId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "why_yaclam",
+                "getById",
+                "{{whyYaclamId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/why_yaclam/update/{{whyYaclamId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "why_yaclam",
+                "update",
+                "{{whyYaclamId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Verified Certificates\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/why_yaclam/delete/{{whyYaclamId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "why_yaclam",
+                "delete",
+                "{{whyYaclamId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fields",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/field/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "field",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Data Science\",\n  \"description\": \"Data analysis and machine learning tracks.\",\n  \"icon\": \"chart-bar\",\n  \"sortOrder\": 1,\n  \"isVisible\": true\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('fieldId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/field/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "field",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetAllFieldByCourse (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/field/getAllFieldByCourse",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "field",
+                "getAllFieldByCourse"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/field/getById/{{fieldId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "field",
+                "getById",
+                "{{fieldId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/field/update/{{fieldId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "field",
+                "update",
+                "{{fieldId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated field description\"\n}"
+            }
+          }
+        },
+        {
+          "name": "UpdateStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/field/updateStatus/{{fieldId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "field",
+                "updateStatus",
+                "{{fieldId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isVisible\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/field/delete/{{fieldId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "field",
+                "delete",
+                "{{fieldId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Course Page CMS",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"headerText\": \"Explore Courses\",\n  \"title\": \"Explore Courses\",\n  \"subtitle\": \"Practical, job-ready skills taught in Somali. Filter by topic, price and level to find your next course.\"\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('coursesPageId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/getById/{{coursesPageId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                "getById",
+                "{{coursesPageId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/update/{{coursesPageId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                "update",
+                "{{coursesPageId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Explore Courses\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/delete/{{coursesPageId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                "delete",
+                "{{coursesPageId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Course",
+      "description": "Course entity — overview, curriculum, details, instructor. Supports JSON and multipart (thumbnail + data). Public: getAll, getById. Auth: create, update, uploads, delete.",
+      "item": [
+        {
+          "name": "Create (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Power BI & Data Analytics Mastery\",\n  \"fieldId\": \"{{fieldId}}\",\n  \"description\": \"A practical, project-based course taught in Somali with English technical terms. Master Power BI and data analytics with real projects.\",\n  \"shortDescription\": \"Master Power BI and data analytics with real projects.\",\n  \"category\": \"data\",\n  \"level\": \"Intermediate\",\n  \"language\": \"Somali\",\n  \"color\": \"#1F3A93\",\n  \"badge\": \"Bestseller\",\n  \"certificate\": true,\n  \"access\": \"1 Year\",\n  \"duration\": \"32 hours\",\n  \"durationHours\": 32,\n  \"price\": 49,\n  \"originalPrice\": 89,\n  \"isFeatured\": true,\n  \"isPublished\": true,\n  \"isVisible\": true,\n  \"overview\": {\n    \"headline\": \"Build smarter, not harder\",\n    \"description\": \"A practical, project-based course taught in Somali with English technical terms.\",\n    \"outcomes\": [\n      \"Build real, portfolio-ready projects from scratch\",\n      \"Understand core concepts deeply, explained in Somali\",\n      \"Earn a verified certificate of completion\"\n    ]\n  },\n  \"curriculum\": [\n    {\n      \"title\": \"Getting Started\",\n      \"sortOrder\": 0,\n      \"lessons\": [\n        {\n          \"id\": \"power-bi-data-analytics-mastery-m1-l1\",\n          \"title\": \"Welcome & how to use this course\",\n          \"duration\": \"04:12\",\n          \"free\": true,\n          \"vimeoId\": \"76979871\"\n        },\n        {\n          \"id\": \"power-bi-data-analytics-mastery-m1-l2\",\n          \"title\": \"Setting up your environment\",\n          \"duration\": \"08:24\",\n          \"free\": true,\n          \"vimeoId\": \"22439234\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Core Concepts\",\n      \"sortOrder\": 1,\n      \"lessons\": [\n        {\n          \"id\": \"power-bi-data-analytics-mastery-m2-l1\",\n          \"title\": \"The fundamentals, explained simply\",\n          \"duration\": \"12:38\",\n          \"vimeoId\": \"57266357\"\n        }\n      ]\n    }\n  ],\n  \"details\": {\n    \"skillLevel\": \"Intermediate\",\n    \"language\": \"Somali\",\n    \"durationHours\": 32,\n    \"certificate\": true,\n    \"access\": \"1 Year\"\n  },\n  \"instructor\": {\n    \"name\": \"Abdikarim Mataan\",\n    \"role\": \"Practitioner-instructor\",\n    \"bio\": \"Practitioner-instructor with years of real-world experience.\",\n    \"avatar\": \"\"\n  }\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('courseId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create (Multipart)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": [],
+                  "description": "Course thumbnail image"
+                },
+                {
+                  "key": "data",
+                  "type": "text",
+                  "value": "{\n  \"title\": \"Power BI & Data Analytics Mastery\",\n  \"fieldId\": \"{{fieldId}}\",\n  \"description\": \"A practical, project-based course taught in Somali with English technical terms. Master Power BI and data analytics with real projects.\",\n  \"shortDescription\": \"Master Power BI and data analytics with real projects.\",\n  \"category\": \"data\",\n  \"level\": \"Intermediate\",\n  \"language\": \"Somali\",\n  \"color\": \"#1F3A93\",\n  \"badge\": \"Bestseller\",\n  \"certificate\": true,\n  \"access\": \"1 Year\",\n  \"duration\": \"32 hours\",\n  \"durationHours\": 32,\n  \"price\": 49,\n  \"originalPrice\": 89,\n  \"isFeatured\": true,\n  \"isPublished\": true,\n  \"isVisible\": true,\n  \"overview\": {\n    \"headline\": \"Build smarter, not harder\",\n    \"description\": \"A practical, project-based course taught in Somali with English technical terms.\",\n    \"outcomes\": [\n      \"Build real, portfolio-ready projects from scratch\",\n      \"Understand core concepts deeply, explained in Somali\",\n      \"Earn a verified certificate of completion\"\n    ]\n  },\n  \"curriculum\": [\n    {\n      \"title\": \"Getting Started\",\n      \"sortOrder\": 0,\n      \"lessons\": [\n        {\n          \"id\": \"power-bi-data-analytics-mastery-m1-l1\",\n          \"title\": \"Welcome & how to use this course\",\n          \"duration\": \"04:12\",\n          \"free\": true,\n          \"vimeoId\": \"76979871\"\n        },\n        {\n          \"id\": \"power-bi-data-analytics-mastery-m1-l2\",\n          \"title\": \"Setting up your environment\",\n          \"duration\": \"08:24\",\n          \"free\": true,\n          \"vimeoId\": \"22439234\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Core Concepts\",\n      \"sortOrder\": 1,\n      \"lessons\": [\n        {\n          \"id\": \"power-bi-data-analytics-mastery-m2-l1\",\n          \"title\": \"The fundamentals, explained simply\",\n          \"duration\": \"12:38\",\n          \"vimeoId\": \"57266357\"\n        }\n      ]\n    }\n  ],\n  \"details\": {\n    \"skillLevel\": \"Intermediate\",\n    \"language\": \"Somali\",\n    \"durationHours\": 32,\n    \"certificate\": true,\n    \"access\": \"1 Year\"\n  },\n  \"instructor\": {\n    \"name\": \"Abdikarim Mataan\",\n    \"role\": \"Practitioner-instructor\",\n    \"bio\": \"Practitioner-instructor with years of real-world experience.\",\n    \"avatar\": \"\"\n  }\n}",
+                  "description": "JSON string — same fields as Create (JSON)"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('courseId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/course/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetAll (featured)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/course/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "isFeatured",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetAll (free)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/course/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "isFree",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/getById/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "getById",
+                "{{courseId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update (JSON)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/update/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "update",
+                "{{courseId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 55,\n  \"overview\": {\n    \"headline\": \"Build smarter, not harder — updated\"\n  },\n  \"details\": {\n    \"access\": \"Lifetime\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Update (Multipart)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/update/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "update",
+                "{{courseId}}"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": [],
+                  "description": "Optional new thumbnail"
+                },
+                {
+                  "key": "data",
+                  "type": "text",
+                  "value": "{\n  \"price\": 55,\n  \"overview\": {\n    \"headline\": \"Build smarter, not harder — updated\"\n  },\n  \"details\": {\n    \"access\": \"Lifetime\"\n  }\n}",
+                  "description": "Partial update JSON (overview, curriculum, details, instructor, etc.)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Thumbnail",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/upload/thumbnail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "upload",
+                "thumbnail"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": [],
+                  "description": "Returns { thumbnail: '/uploads/courses/thumbnails/...' }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/upload/video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "upload",
+                "video"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "video",
+                  "type": "file",
+                  "src": [],
+                  "description": "Returns { videoUrl: '/uploads/courses/videos/...' }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Lesson Video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/{{courseId}}/curriculum/lesson-video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "{{courseId}}",
+                "curriculum",
+                "lesson-video"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "video",
+                  "type": "file",
+                  "src": [],
+                  "description": "Lesson video file"
+                },
+                {
+                  "key": "moduleIndex",
+                  "type": "text",
+                  "value": "0",
+                  "description": "Zero-based module index in curriculum[]"
+                },
+                {
+                  "key": "lessonIndex",
+                  "type": "text",
+                  "value": "0",
+                  "description": "Zero-based lesson index in module.lessons[]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "UpdateStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/status/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "status",
+                "{{courseId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/course/delete/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "course",
+                "delete",
+                "{{courseId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blog Category",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_category/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_category",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Careers\",\n  \"description\": \"Career guides and roadmaps\",\n  \"color\": \"#C9A84C\",\n  \"sortOrder\": 0\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('blogCategoryId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_category/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_category",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_category/getById/{{blogCategoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_category",
+                "getById",
+                "{{blogCategoryId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_category/update/{{blogCategoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_category",
+                "update",
+                "{{blogCategoryId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated category\"\n}"
+            }
+          }
+        },
+        {
+          "name": "UpdateStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_category/status/{{blogCategoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_category",
+                "status",
+                "{{blogCategoryId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isVisible\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_category/delete/{{blogCategoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_category",
+                "delete",
+                "{{blogCategoryId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blog Post",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"How AI Is Changing the Job Market (And What to Do)\",\n  \"categoryId\": \"{{blogCategoryId}}\",\n  \"excerpt\": \"AI will not replace you, but someone using AI well might.\",\n  \"body\": [\n    \"The fear that AI will eliminate all jobs is overblown, but the disruption is real.\",\n    \"The winners learn to direct AI while focusing on judgement and relationships.\"\n  ],\n  \"readTime\": 9,\n  \"publishedDate\": \"2026-02-25\",\n  \"status\": \"published\"\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('blogPostId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_post/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_post",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetAll by categoryId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_post/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_post",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{blogCategoryId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetAll (admin drafts)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_post/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_post",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "includeDrafts",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_post/getById/{{blogPostId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_post",
+                "getById",
+                "{{blogPostId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_post/update/{{blogPostId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_post",
+                "update",
+                "{{blogPostId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Post\"\n}"
+            }
+          }
+        },
+        {
+          "name": "UpdateStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_post/status/{{blogPostId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_post",
+                "status",
+                "{{blogPostId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"published\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/blog_post/delete/{{blogPostId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_post",
+                "delete",
+                "{{blogPostId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blog Posts (alias /blog_posts)",
+      "item": [
+        {
+          "name": "GetAll",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_posts/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_posts",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_posts/getById/{{blogPostId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_posts",
+                "getById",
+                "{{blogPostId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roadmap",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roadmap",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Data Analyst\",\n  \"description\": \"Turn raw data into business decisions.\",\n  \"icon\": \"BarChart3\",\n  \"demand\": \"Very High\",\n  \"salary\": \"€38k–€58k\",\n  \"months\": 8,\n  \"skills\": [\n    \"Excel\",\n    \"SQL\",\n    \"Power BI\",\n    \"Python\",\n    \"Statistics\"\n  ],\n  \"steps\": [\n    {\n      \"title\": \"Foundations\",\n      \"detail\": \"Spreadsheets and statistics.\",\n      \"order\": 0\n    },\n    {\n      \"title\": \"Core skills\",\n      \"detail\": \"SQL and clean workflows.\",\n      \"order\": 1\n    }\n  ]\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('roadmapId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roadmap",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/getById/{{roadmapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roadmap",
+                "getById",
+                "{{roadmapId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/update/{{roadmapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roadmap",
+                "update",
+                "{{roadmapId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated roadmap\"\n}"
+            }
+          }
+        },
+        {
+          "name": "UpdateStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/status/{{roadmapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roadmap",
+                "status",
+                "{{roadmapId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/delete/{{roadmapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roadmap",
+                "delete",
+                "{{roadmapId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roadmaps (alias /roadmaps)",
+      "item": [
+        {
+          "name": "GetAll",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roadmaps/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roadmaps",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roadmaps/getById/{{roadmapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roadmaps",
+                "getById",
+                "{{roadmapId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scholarship",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Scholarship\",\n  \"provider\": \"Provider\",\n  \"country\": \"Global\",\n  \"level\": \"Masters\",\n  \"funding\": \"Full\",\n  \"flag\": \"🌍\",\n  \"deadline\": \"Jan 2027\",\n  \"overview\": \"Scholarship overview text.\",\n  \"benefits\": [\n    \"Full tuition\",\n    \"Living stipend\"\n  ],\n  \"eligibility\": [\n    \"Open to all nationalities\"\n  ],\n  \"documents\": [\n    \"CV\",\n    \"Motivation letter\"\n  ],\n  \"website\": \"https://example.com\"\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('scholarshipId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship/getById/{{scholarshipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship",
+                "getById",
+                "{{scholarshipId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship/update/{{scholarshipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship",
+                "update",
+                "{{scholarshipId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"funding\": \"Partial\"\n}"
+            }
+          }
+        },
+        {
+          "name": "UpdateStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship/status/{{scholarshipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship",
+                "status",
+                "{{scholarshipId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship/delete/{{scholarshipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship",
+                "delete",
+                "{{scholarshipId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scholarships (alias /scholarships)",
+      "item": [
+        {
+          "name": "GetAll",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/scholarships/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarships",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/scholarships/getById/{{scholarshipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarships",
+                "getById",
+                "{{scholarshipId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scholarship CMS",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship_cms/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship_cms",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"headerText\": \"Scholarship Portal\",\n  \"title\": \"Scholarship Portal\",\n  \"subtitle\": \"Funded study opportunities worldwide — eligibility, benefits and deadlines, explained for Somali applicants.\",\n  \"emptyStateText\": \"No scholarships found.\"\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('scholarshipCmsId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship_cms/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship_cms",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship_cms/getById/{{scholarshipCmsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship_cms",
+                "getById",
+                "{{scholarshipCmsId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship_cms/update/{{scholarshipCmsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship_cms",
+                "update",
+                "{{scholarshipCmsId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subtitle\": \"Updated scholarship portal subtitle.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scholarship_cms/delete/{{scholarshipCmsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scholarship_cms",
+                "delete",
+                "{{scholarshipCmsId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Practitioners",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/practitioner/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioner",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"initials\": \"MA\",\n  \"name\": \"Eng. Mohamud Ali\",\n  \"role\": \"Software Engineering\",\n  \"coursesCount\": 6,\n  \"studentsCount\": \"4.6k\",\n  \"color\": \"#1D4ED8\",\n  \"sortOrder\": 1\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('practitionerId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/practitioner/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioner",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetAll (visible only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/practitioner/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioner",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "isVisible",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/practitioner/getById/{{practitionerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioner",
+                "getById",
+                "{{practitionerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/practitioner/update/{{practitionerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioner",
+                "update",
+                "{{practitionerId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coursesCount\": 7\n}"
+            }
+          }
+        },
+        {
+          "name": "UpdateStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/practitioner/status/{{practitionerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioner",
+                "status",
+                "{{practitionerId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isVisible\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/practitioner/delete/{{practitionerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioner",
+                "delete",
+                "{{practitionerId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Practitioners (alias /practitioners)",
+      "item": [
+        {
+          "name": "GetAll",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/practitioners/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioners",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/practitioners/getById/{{practitionerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "practitioners",
+                "getById",
+                "{{practitionerId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Testimonials",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/testimonial/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testimonial",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"I learned Power BI in Somali first, then practised in English. Within five months I landed my first analyst role. Yaclam made it feel possible.\",\n  \"initials\": \"HA\",\n  \"name\": \"Hodan A.\",\n  \"role\": \"Data Analyst\",\n  \"location\": \"Dublin\",\n  \"sortOrder\": 1\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "try {",
+                    "  const res = pm.response.json();",
+                    "  const id = res.id || res._id || (res.data && res.data[0] && (res.data[0].id || res.data[0]._id));",
+                    "  if (id) pm.collectionVariables.set('testimonialId', id);",
+                    "} catch (e) {}"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GetAll (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/testimonial/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testimonial",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/testimonial/getById/{{testimonialId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testimonial",
+                "getById",
+                "{{testimonialId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/testimonial/update/{{testimonialId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testimonial",
+                "update",
+                "{{testimonialId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Dublin, Ireland\"\n}"
+            }
+          }
+        },
+        {
+          "name": "UpdateStatus",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/testimonial/status/{{testimonialId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testimonial",
+                "status",
+                "{{testimonialId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isVisible\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/testimonial/delete/{{testimonialId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testimonial",
+                "delete",
+                "{{testimonialId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Testimonials (alias /testimonials)",
+      "item": [
+        {
+          "name": "GetAll",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/testimonials/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testimonials",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/testimonials/getById/{{testimonialId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testimonials",
+                "getById",
+                "{{testimonialId}}"
               ]
             }
           }
@@ -2736,6 +3969,106 @@
                 "role",
                 "delete",
                 "{{roleId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blog Categories (alias /blog_categories)",
+      "item": [
+        {
+          "name": "GetAll",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_categories/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_categories",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/blog_categories/getById/{{blogCategoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "blog_categories",
+                "getById",
+                "{{blogCategoryId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fields (alias /fields)",
+      "item": [
+        {
+          "name": "GetAll",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fields/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fields",
+                "getAll"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fields/getById/{{fieldId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fields",
+                "getById",
+                "{{fieldId}}"
               ]
             }
           }

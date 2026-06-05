@@ -5,12 +5,18 @@ const fieldController = require("../controllers/field");
 const auth = require("../middlewares/auth");
 
 router.get("/getAll", fieldController.getAll);
+router.get("/getAllFieldByCourse", fieldController.getAllFieldByCourse);
 
 router.use(auth.authorize());
 
 router.get("/getById/:id", fieldController.getById);
 router.post("/create", validate.validate(fieldValidation.createSchema), fieldController.create);
 router.patch("/update/:id", validate.validate(fieldValidation.updateSchema), fieldController.update);
+router.patch(
+  "/updateStatus/:id",
+  validate.validate(fieldValidation.updateStatusSchema),
+  fieldController.updateStatus
+);
 router.delete("/delete/:id", fieldController.delete);
 
 module.exports = router;

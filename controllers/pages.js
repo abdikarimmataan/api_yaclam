@@ -7,7 +7,7 @@ const ALLOWED_KEYS = ["home", "about", "contact"];
 function toPublicPage(doc) {
   const p = doc.toObject ? doc.toObject() : doc;
   return {
-    slug: p.slug,
+    path: p.path,
     title: p.title,
     status: p.status,
     sections: p.sections || [],
@@ -46,8 +46,8 @@ module.exports = {
       const doc = await Page.findOne({ pageKey, del_status: "Live" });
       if (!doc) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
 
-      const { slug, title, status, sections } = req.body;
-      if (slug !== undefined) doc.slug = slug;
+      const { path, title, status, sections } = req.body;
+      if (path !== undefined) doc.path = path;
       if (title !== undefined) doc.title = title;
       if (status !== undefined) doc.status = status;
       if (sections !== undefined) doc.sections = sections;

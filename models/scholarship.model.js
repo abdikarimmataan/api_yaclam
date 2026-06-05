@@ -3,21 +3,28 @@ const { toJSON } = require("../utilities/toJson.utility");
 
 const scholarshipSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true, unique: true },
     title: { type: String, trim: true },
-    slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     provider: { type: String, default: "" },
     country: { type: String, default: "" },
     level: { type: String, default: "" },
-    funding: { type: String, default: "" },
+    funding: {
+      type: String,
+      enum: ["Full", "Partial", ""],
+      default: "Full",
+    },
     flag: { type: String, default: "" },
-    amount: { type: String, default: "" },
     deadline: { type: String, default: "" },
-    eligibility: { type: String, default: "" },
+    amount: { type: String, default: "" },
+    website: { type: String, default: "" },
+    overview: { type: String, default: "" },
     description: { type: String, default: "" },
+    benefits: { type: [String], default: [] },
+    eligibility: { type: [String], default: [] },
+    documents: { type: [String], default: [] },
     applicationUrl: { type: String, default: "" },
     ctaButton: {
-      label: { type: String, default: "Apply" },
+      label: { type: String, default: "Official Website" },
       url: { type: String, default: "" },
       isVisible: { type: Boolean, default: true },
     },
@@ -31,9 +38,16 @@ const scholarshipSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
-scholarshipSchema.pre("save", function syncTitle(next) {
+scholarshipSchema.pre("save", function syncScholarshipFields(next) {
   if (this.name && !this.title) this.title = this.name;
   if (!this.name && this.title) this.name = this.title;
+  if (this.overview && !this.description) this.description = this.overview;
+  if (!this.overview && this.description) this.overview = this.description;
+  if (this.website && !this.applicationUrl) this.applicationUrl = this.website;
+  if (!this.website && this.applicationUrl) this.website = this.applicationUrl;
+  if (this.ctaButton && this.website && !this.ctaButton.url) {
+    this.ctaButton.url = this.website;
+  }
   next();
 });
 

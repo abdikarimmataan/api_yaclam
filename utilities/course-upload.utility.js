@@ -1,0 +1,253 @@
+const path = require("path");
+const fs = require("fs");
+const { toPublicPath, COURSE_THUMBNAILS, COURSE_VIDEOS } = require("../middlewares/upload.middleware");
+
+function normalizeManagedPath(url) {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  const match = trimmed.match(/\/uploads\/courses\/(?:videos|thumbnails)\/[^?#\s]+/i);
+  if (match) return match[0];
+  if (trimmed.startsWith("/uploads/courses/")) return trimmed.split("?")[0];
+  return "";
+}
+
+function publicPathToAbsolute(publicPath) {
+  const normalized = normalizeManagedPath(publicPath);
+  if (!normalized) return null;
+  const rel = normalized.replace(/^\/uploads\/?/, "");
+  const abs = path.join(path.join(__dirname, "..", "uploads"), rel);
+  const uploadsRoot = path.resolve(path.join(__dirname, "..", "uploads"));
+  const resolved = path.resolve(abs);
+  if (!resolved.startsWith(uploadsRoot)) return null;
+  return resolved;
+}
+
+function isManagedUploadPath(url) {
+  return Boolean(normalizeManagedPath(url));
+}
+
+function safeUnlink(absPath) {
+  if (!absPath || !fs.existsSync(absPath)) return;
+  try {
+    fs.unlinkSync(absPath);
+  } catch {
+    /* ignore */
+  }
+}
+
+function deleteByPublicPath(publicPath) {
+  safeUnlink(publicPathToAbsolute(publicPath));
+}
+
+function serializeCurriculum(curriculum) {
+  if (!curriculum) return [];
+  if (Array.isArray(curriculum)) {
+    const raw = curriculum.map((mod) => (mod?.toObject ? mod.toObject() : mod));
+    return JSON.parse(JSON.stringify(raw));
+  }
+  return JSON.parse(JSON.stringify(curriculum));
+}
+
+function collectCurriculumVideoUrls(curriculum) {
+  const urls = new Set();
+  for (const mod of serializeCurriculum(curriculum)) {
+    for (const lesson of mod.lessons || []) {
+      const normalized = normalizeManagedPath(lesson.videoUrl);
+      if (normalized) urls.add(normalized);
+    }
+  }
+  return urls;
+}
+
+function diffRemovedCurriculumVideos(oldCurriculum, newCurriculum) {
+  const oldUrls = collectCurriculumVideoUrls(oldCurriculum);
+  const newUrls = collectCurriculumVideoUrls(newCurriculum);
+  return [...oldUrls].filter((u) => !newUrls.has(u));
+}
+
+function lessonVideoMap(curriculum) {
+  const map = new Map();
+  for (const mod of serializeCurriculum(curriculum)) {
+    for (const lesson of mod.lessons || []) {
+      if (lesson?.id) map.set(String(lesson.id), normalizeManagedPath(String(lesson.videoUrl ?? "")));
+    }
+  }
+  return map;
+}
+
+function diffChangedCurriculumVideos(oldCurriculum, newCurriculum) {
+  const urlsToDelete = new Set();
+  const oldSerialized = serializeCurriculum(oldCurriculum);
+  const newSerialized = serializeCurriculum(newCurriculum);
+
+  const oldMap = lessonVideoMap(oldSerialized);
+  const newMap = lessonVideoMap(newSerialized);
+  for (const [id, oldUrl] of oldMap) {
+    if (!oldUrl) continue;
+    const newUrl = newMap.has(id) ? newMap.get(id) : "";
+    if (newUrl !== oldUrl) urlsToDelete.add(oldUrl);
+  }
+
+  for (let mi = 0; mi < oldSerialized.length; mi++) {
+    const oldLessons = oldSerialized[mi]?.lessons || [];
+    const newLessons = newSerialized[mi]?.lessons || [];
+    for (let li = 0; li < oldLessons.length; li++) {
+      const oldUrl = normalizeManagedPath(String(oldLessons[li]?.videoUrl ?? ""));
+      const newUrl = normalizeManagedPath(String(newLessons[li]?.videoUrl ?? ""));
+      if (oldUrl && oldUrl !== newUrl) urlsToDelete.add(oldUrl);
+    }
+  }
+
+  for (const url of diffRemovedCurriculumVideos(oldSerialized, newSerialized)) {
+    urlsToDelete.add(url);
+  }
+
+  return [...urlsToDelete];
+}
+
+function findLessonIndices(curriculum, { moduleIndex, lessonIndex, lessonId }) {
+  const serialized = serializeCurriculum(curriculum);
+  if (lessonId) {
+    for (let mi = 0; mi < serialized.length; mi++) {
+      const li = (serialized[mi].lessons || []).findIndex((l) => String(l.id) === String(lessonId));
+      if (li >= 0) return { mi, li };
+    }
+  }
+  const mi = Number(moduleIndex);
+  const li = Number(lessonIndex);
+  if (!Number.isNaN(mi) && !Number.isNaN(li)) return { mi, li };
+  return null;
+}
+
+function getLessonVideoUrl(curriculum, moduleIndex, lessonIndex) {
+  const mod = serializeCurriculum(curriculum)[moduleIndex];
+  return normalizeManagedPath(String(mod?.lessons?.[lessonIndex]?.videoUrl ?? ""));
+}
+
+function setCourseCurriculum(course, curriculum) {
+  course.curriculum = serializeCurriculum(curriculum);
+  course.markModified("curriculum");
+}
+
+function setLessonVideoUrl(course, moduleIndex, lessonIndex, videoUrl) {
+  const curriculum = serializeCurriculum(course.curriculum);
+  if (!curriculum[moduleIndex]?.lessons?.[lessonIndex]) return false;
+  curriculum[moduleIndex].lessons[lessonIndex].videoUrl = normalizeManagedPath(videoUrl);
+  setCourseCurriculum(course, curriculum);
+  return true;
+}
+
+function applyLessonVideoToBody(body, committedVideo, course) {
+  if (!committedVideo) return { body, replacedVideoUrl: null };
+
+  const normalizedVideo = normalizeManagedPath(committedVideo) || committedVideo;
+  if (!Array.isArray(body.curriculum)) {
+    body.curriculum = serializeCurriculum(course?.curriculum);
+  }
+
+  const target = findLessonIndices(body.curriculum, body);
+  if (target) {
+    const replacedVideoUrl = getLessonVideoUrl(course?.curriculum, target.mi, target.li) || null;
+    body.curriculum[target.mi].lessons[target.li].videoUrl = normalizedVideo;
+    delete body.moduleIndex;
+    delete body.lessonIndex;
+    delete body.lessonId;
+    return { body, replacedVideoUrl };
+  }
+
+  if (body.curriculum[0]?.lessons?.[0]) {
+    const replacedVideoUrl = getLessonVideoUrl(course?.curriculum, 0, 0) || null;
+    body.curriculum[0].lessons[0].videoUrl = normalizedVideo;
+    return { body, replacedVideoUrl };
+  }
+
+  return { body, replacedVideoUrl: null };
+}
+
+function applyCourseFields(course, body) {
+  const skip = new Set(["moduleIndex", "lessonIndex", "lessonId", "removeThumbnail", "removeVideo"]);
+  const { curriculum, ...rest } = body;
+
+  Object.entries(rest).forEach(([key, value]) => {
+    if (skip.has(key) || value === undefined) return;
+    course.set(key, value);
+  });
+
+  if (curriculum !== undefined) {
+    setCourseCurriculum(course, curriculum);
+  }
+}
+
+function cleanupCurriculumVideos(oldCurriculum, newCurriculum, { keepUrls = [] } = {}) {
+  const keep = new Set(keepUrls.map((u) => normalizeManagedPath(u)).filter(Boolean));
+  const toDelete = diffChangedCurriculumVideos(oldCurriculum, newCurriculum);
+  toDelete.forEach((url) => {
+    if (!keep.has(url)) deleteByPublicPath(url);
+  });
+}
+
+function collectPendingFiles(req) {
+  const pending = [];
+  const thumb = req.file?.fieldname === "thumbnail" ? req.file : req.files?.thumbnail?.[0];
+  const video = req.file?.fieldname === "video" ? req.file : req.files?.video?.[0];
+  if (thumb?.path) pending.push({ file: thumb, type: "thumbnail" });
+  if (video?.path) pending.push({ file: video, type: "video" });
+  return pending;
+}
+
+function commitPendingFile(entry) {
+  const destDir = entry.type === "video" ? COURSE_VIDEOS : COURSE_THUMBNAILS;
+  const destPath = path.join(destDir, entry.file.filename);
+  fs.mkdirSync(destDir, { recursive: true });
+  if (entry.file.path !== destPath) {
+    fs.renameSync(entry.file.path, destPath);
+  }
+  return toPublicPath(entry.file.filename, entry.type);
+}
+
+function commitPendingFiles(pending) {
+  const committed = {};
+  for (const entry of pending) {
+    committed[entry.type] = commitPendingFile(entry);
+  }
+  return committed;
+}
+
+function rollbackPendingFiles(pending) {
+  for (const entry of pending) {
+    safeUnlink(entry.file.path);
+  }
+}
+
+function rollbackCommittedPaths(pathsByType) {
+  if (pathsByType.thumbnail) deleteByPublicPath(pathsByType.thumbnail);
+  if (pathsByType.video) deleteByPublicPath(pathsByType.video);
+}
+
+function shouldRemoveThumbnail(body) {
+  return body.removeThumbnail === true || body.removeThumbnail === "true" || body.thumbnail === "";
+}
+
+module.exports = {
+  normalizeManagedPath,
+  publicPathToAbsolute,
+  isManagedUploadPath,
+  deleteByPublicPath,
+  serializeCurriculum,
+  collectCurriculumVideoUrls,
+  diffRemovedCurriculumVideos,
+  diffChangedCurriculumVideos,
+  findLessonIndices,
+  getLessonVideoUrl,
+  setCourseCurriculum,
+  setLessonVideoUrl,
+  applyLessonVideoToBody,
+  applyCourseFields,
+  cleanupCurriculumVideos,
+  collectPendingFiles,
+  commitPendingFile,
+  commitPendingFiles,
+  rollbackPendingFiles,
+  rollbackCommittedPaths,
+  shouldRemoveThumbnail,
+};

@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "seed": "node scripts/seed.js"
+    "postman": "node scripts/generate-postman.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

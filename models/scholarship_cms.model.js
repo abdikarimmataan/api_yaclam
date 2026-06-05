@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { toJSON } = require("../utilities/toJson.utility");
 
-const scholarshipsSchema = new mongoose.Schema(
+const scholarshipCmsSchema = new mongoose.Schema(
   {
     headerText: { type: String, default: "Scholarship Portal" },
     title: { type: String, default: "Scholarship Portal" },
@@ -17,5 +17,5 @@ const scholarshipsSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
-scholarshipsSchema.plugin(toJSON);
-module.exports = mongoose.model("Scholarships", scholarshipsSchema, "scholarships_page");
+scholarshipCmsSchema.plugin(toJSON);
+module.exports = mongoose.model("ScholarshipCms", scholarshipCmsSchema, "scholarship_cms");

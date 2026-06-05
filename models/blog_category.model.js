@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 const { toJSON } = require("../utilities/toJson.utility");
 
-const fieldSchema = new mongoose.Schema(
+const blogCategorySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, unique: true },
     description: { type: String, default: "" },
-    icon: { type: String, default: "" },
+    color: { type: String, default: "#1F3A93" },
     sortOrder: { type: Number, default: 0 },
     isVisible: { type: Boolean, default: true },
     del_status: { type: String, enum: ["Live", "Deleted"], default: "Live" },
@@ -13,5 +13,5 @@ const fieldSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
-fieldSchema.plugin(toJSON);
-module.exports = mongoose.model("Field", fieldSchema, "fields");
+blogCategorySchema.plugin(toJSON);
+module.exports = mongoose.model("BlogCategory", blogCategorySchema, "blog_categories");

@@ -1,15 +1,22 @@
 const Joi = require("joi");
 
 const createSchema = Joi.object({
-  name: Joi.string().required(),
-  slug: Joi.string().required(),
+  name: Joi.string().trim().min(1).required(),
   description: Joi.string().allow("").optional(),
   icon: Joi.string().allow("").optional(),
   sortOrder: Joi.number().optional(),
   isVisible: Joi.boolean().optional(),
-  status: Joi.boolean().optional(),
 });
 
-const updateSchema = createSchema.fork(["name", "slug"], (s) => s.optional());
+const updateSchema = Joi.object({
+  name: Joi.string().trim().min(1).optional(),
+  description: Joi.string().allow("").optional(),
+  icon: Joi.string().allow("").optional(),
+  sortOrder: Joi.number().optional(),
+});
 
-module.exports = { createSchema, updateSchema };
+const updateStatusSchema = Joi.object({
+  isVisible: Joi.boolean().required(),
+});
+
+module.exports = { createSchema, updateSchema, updateStatusSchema };
