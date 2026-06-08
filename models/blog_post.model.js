@@ -3,7 +3,7 @@ const { toJSON } = require("../utilities/toJson.utility");
 
 const blogPostSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true, trim: true, unique: true },
+    title: { type: String, required: true, trim: true },
     excerpt: { type: String, default: "" },
     body: { type: [String], default: [] },
     content: { type: String, default: "" },
@@ -11,7 +11,7 @@ const blogPostSchema = new mongoose.Schema(
     category: { type: String, default: "" },
     color: { type: String, default: "#1F3A93" },
     readTime: { type: Number, default: 0 },
-    publishedDate: { type: String, default: "" },
+    publishedDate: { type: Date, default: null },
     coverImage: { type: String, default: "" },
     authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     authorName: { type: String, default: "" },
@@ -46,4 +46,29 @@ blogPostSchema.pre("save", function syncBlogContent(next) {
 });
 
 blogPostSchema.plugin(toJSON);
-module.exports = mongoose.model("BlogPost", blogPostSchema, "blog_posts");
+
+const BlogPost = mongoose.model("BlogPost", blogPostSchema, "blog_posts");
+
+async function dropBlogTitleUniqueIndex() {
+  if (mongoose.connection.readyState !== 1) return;
+
+  try {
+    const collection = mongoose.connection.collection("blog_posts");
+    const indexes = await collection.indexes();
+    for (const index of indexes) {
+      if (index.key?.title === 1 && index.unique) {
+        await collection.dropIndex(index.name);
+      }
+    }
+  } catch (_) {
+    // index may not exist yet
+  }
+}
+
+if (mongoose.connection.readyState === 1) {
+  dropBlogTitleUniqueIndex();
+} else {
+  mongoose.connection.once("connected", dropBlogTitleUniqueIndex);
+}
+
+module.exports = BlogPost;

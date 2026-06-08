@@ -21,7 +21,6 @@ fieldSchema.index(
 fieldSchema.plugin(toJSON);
 
 const Field = mongoose.model("Field", fieldSchema, "fields");
-
 async function syncFieldNameIndex() {
   if (mongoose.connection.readyState !== 1) return;
 

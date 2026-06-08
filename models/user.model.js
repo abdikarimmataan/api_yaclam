@@ -36,6 +36,8 @@ const userSchema = new mongoose.Schema(
     session: { type: sessionSchema, default: () => ({}) },
     last_login: { type: Date },
     failed_logins: { type: Number, default: 0 },
+    password_reset_token: { type: String, select: false, default: null },
+    password_reset_expires: { type: Date, select: false, default: null },
     del_status: { type: String, enum: ["Live", "Deleted"], default: "Live" },
     deleted_at: { type: Date, default: null },
   },

@@ -1,4 +1,14 @@
-const JSON_FIELDS = ["overview", "curriculum", "details", "instructor", "badges", "ctaButton", "wishlistButton"];
+const JSON_FIELDS = [
+  "overview",
+  "curriculum",
+  "resources",
+  "details",
+  "instructor",
+  "badges",
+  "ctaButton",
+  "wishlistButton",
+  "resourceFileIndexes",
+];
 const { normalizeManagedPath } = require("./course-upload.utility");
 
 function parseJsonField(value) {
@@ -51,6 +61,30 @@ function parseCourseBody(raw = {}) {
   delete body.slug;
 
   return body;
+}
+
+function resourceId(courseKey, resourceIndex) {
+  const key = String(courseKey || "course")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40) || "course";
+  return `${key}-r${resourceIndex + 1}`;
+}
+
+function normalizeResources(resources, courseKey = "course") {
+  if (!Array.isArray(resources)) return [];
+
+  return resources.map((resource, index) => ({
+    id: String(resource.id ?? resourceId(courseKey, index)).trim(),
+    title: String(resource.title ?? "").trim(),
+    description: String(resource.description ?? ""),
+    fileUrl: normalizeManagedPath(String(resource.fileUrl ?? "")),
+    fileName: String(resource.fileName ?? ""),
+    fileSize: Number(resource.fileSize ?? 0),
+    mimeType: String(resource.mimeType ?? ""),
+    sortOrder: Number(resource.sortOrder ?? index),
+    isVisible: resource.isVisible !== false,
+  }));
 }
 
 function lessonId(courseKey, moduleIndex, lessonIndex) {
@@ -125,7 +159,9 @@ function syncFlatFields(payload) {
 module.exports = {
   parseCourseBody,
   normalizeCurriculum,
+  normalizeResources,
   countLessons,
   syncFlatFields,
   lessonId,
+  resourceId,
 };

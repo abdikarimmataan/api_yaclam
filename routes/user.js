@@ -6,12 +6,15 @@ const auth = require("../middlewares/auth");
 
 router.post("/register", validate.validate(userVal.registerSchema), userController.register);
 router.post("/login", validate.validate(userVal.loginSchema), userController.login);
+router.post("/forgot-password", validate.validate(userVal.forgotPasswordSchema), userController.forgotPassword);
+router.post("/reset-password", validate.validate(userVal.resetPasswordSchema), userController.resetPassword);
 router.post("/admin/login", validate.validate(userVal.loginSchema), userController.loginAdmin);
 
 router.use(auth.authorize());
 
 router.post("/admin/create", validate.validate(userVal.createAdminSchema), userController.createAdmin);
 router.get("/profile", userController.getProfile);
+router.patch("/change-password", validate.validate(userVal.passwordChangeSchema), userController.changePassword);
 router.get("/getall/adminUsers", userController.getAdminUsers);
 router.get("/getall/students", userController.getStudents);
 router.get("/getById/:id", userController.getById);

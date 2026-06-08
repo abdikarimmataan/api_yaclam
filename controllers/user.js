@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 const { isValidObjectId } = mongoose;
 
@@ -7,6 +8,7 @@ const Role = require("../models/role.model");
 const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
+const EmailUtility = require("../utilities/email.utility.js");
 const tokens = require("../auth/token");
 
 function stripPassword(user) {
@@ -44,7 +46,7 @@ async function listByAccountType(req, res, accountType) {
 module.exports = {
   register: async (req, res) => {
     try {
-      const { email, password, phone, profile } = req.body;
+      const { fullname, email, password, status = true } = req.body;
 
       const existing = await User.findOne({ email: email.toLowerCase(), del_status: "Live" });
       if (existing) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
@@ -55,10 +57,9 @@ module.exports = {
       await User.create({
         email: email.toLowerCase(),
         password: hashed,
-        phone: phone || "",
         accountType: "student",
-        profile,
-        status: true,
+        profile: { full_name: fullname },
+        status,
         approve: true,
       });
 
@@ -105,6 +106,91 @@ module.exports = {
         accessToken,
         refreshToken,
       });
+    } catch (err) {
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  forgotPassword: async (req, res) => {
+    try {
+      const { email } = req.body;
+      const user = await User.findOne({
+        email: email.toLowerCase(),
+        del_status: "Live",
+        accountType: "student",
+      });
+
+      if (user) {
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        user.password_reset_token = crypto.createHash("sha256").update(resetToken).digest("hex");
+        user.password_reset_expires = new Date(Date.now() + 60 * 60 * 1000);
+        await user.save();
+
+        await EmailUtility.sendPasswordResetEmail(user.email, resetToken);
+      }
+
+      return Response.customResponse(
+        res,
+        200,
+        "If an account with that email exists, a password reset link has been sent"
+      );
+    } catch (err) {
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  resetPassword: async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+      const user = await User.findOne({
+        password_reset_token: hashedToken,
+        password_reset_expires: { $gt: new Date() },
+        del_status: "Live",
+        accountType: "student",
+      }).select("+password_reset_token +password_reset_expires");
+
+      if (!user) {
+        return Response.customResponse(res, 400, "Invalid or expired reset token");
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+      user.password_reset_token = null;
+      user.password_reset_expires = null;
+      user.failed_logins = 0;
+      await user.save();
+
+      return Response.customResponse(res, 200, "Password reset successful");
+    } catch (err) {
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  changePassword: async (req, res) => {
+    try {
+      if (req.user?.accountType !== "student") {
+        return Response.customResponse(res, 403, ResponseMessage.ACCESS_DENIED);
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      const user = await User.findOne({
+        _id: req.user.userId,
+        del_status: "Live",
+        accountType: "student",
+      }).select("+password");
+
+      if (!user) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
+
+      const valid = await bcrypt.compare(currentPassword, user.password);
+      if (!valid) return Response.customResponse(res, 400, "Current password is incorrect");
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+      await user.save();
+
+      return Response.customResponse(res, 200, "Password changed successfully");
     } catch (err) {
       return Response.errorResponse(res, 500, err.message || err);
     }
