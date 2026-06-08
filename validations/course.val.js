@@ -33,6 +33,18 @@ const detailsSchema = Joi.object({
   access: Joi.string().allow("").optional(),
 });
 
+const resourceSchema = Joi.object({
+  id: Joi.string().optional(),
+  title: Joi.string().required(),
+  description: Joi.string().allow("").optional(),
+  fileUrl: Joi.string().allow("").optional(),
+  fileName: Joi.string().allow("").optional(),
+  fileSize: Joi.number().min(0).optional(),
+  mimeType: Joi.string().allow("").optional(),
+  sortOrder: Joi.number().optional(),
+  isVisible: Joi.boolean().optional(),
+});
+
 const instructorSchema = Joi.object({
   instructorId: Joi.string().allow("", null).optional(),
   name: Joi.string().allow("").optional(),
@@ -72,6 +84,8 @@ const baseFields = {
   status: Joi.boolean().optional(),
   overview: overviewSchema.optional(),
   curriculum: Joi.array().items(moduleSchema).optional(),
+  resources: Joi.array().items(resourceSchema).optional(),
+  resourceFileIndexes: Joi.array().items(Joi.number().integer().min(0)).optional(),
   details: detailsSchema.optional(),
   instructor: instructorSchema.optional(),
   removeThumbnail: Joi.boolean().optional(),

@@ -1,11 +1,16 @@
 const path = require("path");
 const fs = require("fs");
-const { toPublicPath, COURSE_THUMBNAILS, COURSE_VIDEOS } = require("../middlewares/upload.middleware");
+const {
+  toPublicPath,
+  COURSE_THUMBNAILS,
+  COURSE_VIDEOS,
+  COURSE_RESOURCES,
+} = require("../middlewares/upload.middleware");
 
 function normalizeManagedPath(url) {
   if (!url || typeof url !== "string") return "";
   const trimmed = url.trim();
-  const match = trimmed.match(/\/uploads\/courses\/(?:videos|thumbnails)\/[^?#\s]+/i);
+  const match = trimmed.match(/\/uploads\/courses\/(?:videos|thumbnails|resources)\/[^?#\s]+/i);
   if (match) return match[0];
   if (trimmed.startsWith("/uploads/courses/")) return trimmed.split("?")[0];
   return "";
@@ -164,9 +169,21 @@ function applyLessonVideoToBody(body, committedVideo, course) {
   return { body, replacedVideoUrl: null };
 }
 
+function setCourseResources(course, resources) {
+  course.resources = serializeResources(resources);
+  course.markModified("resources");
+}
+
 function applyCourseFields(course, body) {
-  const skip = new Set(["moduleIndex", "lessonIndex", "lessonId", "removeThumbnail", "removeVideo"]);
-  const { curriculum, ...rest } = body;
+  const skip = new Set([
+    "moduleIndex",
+    "lessonIndex",
+    "lessonId",
+    "removeThumbnail",
+    "removeVideo",
+    "resourceFileIndexes",
+  ]);
+  const { curriculum, resources, ...rest } = body;
 
   Object.entries(rest).forEach(([key, value]) => {
     if (skip.has(key) || value === undefined) return;
@@ -175,6 +192,10 @@ function applyCourseFields(course, body) {
 
   if (curriculum !== undefined) {
     setCourseCurriculum(course, curriculum);
+  }
+
+  if (resources !== undefined) {
+    setCourseResources(course, resources);
   }
 }
 
@@ -186,29 +207,136 @@ function cleanupCurriculumVideos(oldCurriculum, newCurriculum, { keepUrls = [] }
   });
 }
 
+function serializeResources(resources) {
+  if (!resources) return [];
+  if (Array.isArray(resources)) {
+    const raw = resources.map((item) => (item?.toObject ? item.toObject() : item));
+    return JSON.parse(JSON.stringify(raw));
+  }
+  return JSON.parse(JSON.stringify(resources));
+}
+
+function collectResourceFileUrls(resources) {
+  const urls = new Set();
+  for (const resource of serializeResources(resources)) {
+    const normalized = normalizeManagedPath(resource.fileUrl);
+    if (normalized) urls.add(normalized);
+  }
+  return urls;
+}
+
+function diffRemovedResourceFiles(oldResources, newResources) {
+  const oldUrls = collectResourceFileUrls(oldResources);
+  const newUrls = collectResourceFileUrls(newResources);
+  return [...oldUrls].filter((u) => !newUrls.has(u));
+}
+
+function cleanupRemovedResources(oldResources, newResources, { keepUrls = [] } = {}) {
+  const keep = new Set(keepUrls.map((u) => normalizeManagedPath(u)).filter(Boolean));
+  const toDelete = diffRemovedResourceFiles(oldResources, newResources);
+  toDelete.forEach((url) => {
+    if (!keep.has(url)) deleteByPublicPath(url);
+  });
+}
+
+function resolveResourceFileIndexes(body, fileCount) {
+  if (!fileCount) return [];
+
+  const raw = body.resourceFileIndexes;
+  if (Array.isArray(raw)) {
+    return raw.map((value) => Number(value)).filter((value) => !Number.isNaN(value));
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map((value) => Number(value)).filter((value) => !Number.isNaN(value));
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  if (!Array.isArray(body.resources)) return [];
+  return body.resources.reduce((indexes, resource, index) => {
+    if (!normalizeManagedPath(resource?.fileUrl)) indexes.push(index);
+    return indexes;
+  }, []);
+}
+
+function applyResourceFilesToBody(body, committedResources, resourceFileIndexes) {
+  if (!committedResources?.length) return body;
+  if (!Array.isArray(body.resources)) body.resources = [];
+
+  const indexes = resourceFileIndexes.length
+    ? resourceFileIndexes
+    : resolveResourceFileIndexes(body, committedResources.length);
+
+  committedResources.forEach((committed, fileIndex) => {
+    const resourceIndex = indexes[fileIndex];
+    if (resourceIndex == null || !body.resources[resourceIndex]) return;
+
+    body.resources[resourceIndex] = {
+      ...body.resources[resourceIndex],
+      fileUrl: committed.fileUrl,
+      fileName: committed.fileName,
+      fileSize: committed.fileSize,
+      mimeType: committed.mimeType,
+    };
+  });
+
+  delete body.resourceFileIndexes;
+  return body;
+}
+
 function collectPendingFiles(req) {
   const pending = [];
   const thumb = req.file?.fieldname === "thumbnail" ? req.file : req.files?.thumbnail?.[0];
   const video = req.file?.fieldname === "video" ? req.file : req.files?.video?.[0];
+  const resourceFiles = req.files?.resourceFiles || [];
+
   if (thumb?.path) pending.push({ file: thumb, type: "thumbnail" });
   if (video?.path) pending.push({ file: video, type: "video" });
+  resourceFiles.forEach((file) => {
+    if (file?.path) pending.push({ file, type: "resource" });
+  });
   return pending;
 }
 
 function commitPendingFile(entry) {
-  const destDir = entry.type === "video" ? COURSE_VIDEOS : COURSE_THUMBNAILS;
+  const destDir =
+    entry.type === "video"
+      ? COURSE_VIDEOS
+      : entry.type === "resource"
+        ? COURSE_RESOURCES
+        : COURSE_THUMBNAILS;
   const destPath = path.join(destDir, entry.file.filename);
   fs.mkdirSync(destDir, { recursive: true });
   if (entry.file.path !== destPath) {
     fs.renameSync(entry.file.path, destPath);
   }
+
+  if (entry.type === "resource") {
+    return {
+      fileUrl: toPublicPath(entry.file.filename, "resource"),
+      fileName: entry.file.originalname || entry.file.filename,
+      fileSize: entry.file.size || 0,
+      mimeType: entry.file.mimetype || "",
+    };
+  }
+
   return toPublicPath(entry.file.filename, entry.type);
 }
 
 function commitPendingFiles(pending) {
-  const committed = {};
+  const committed = { resources: [] };
   for (const entry of pending) {
-    committed[entry.type] = commitPendingFile(entry);
+    const result = commitPendingFile(entry);
+    if (entry.type === "resource") {
+      committed.resources.push(result);
+    } else {
+      committed[entry.type] = result;
+    }
   }
   return committed;
 }
@@ -222,6 +350,9 @@ function rollbackPendingFiles(pending) {
 function rollbackCommittedPaths(pathsByType) {
   if (pathsByType.thumbnail) deleteByPublicPath(pathsByType.thumbnail);
   if (pathsByType.video) deleteByPublicPath(pathsByType.video);
+  for (const resource of pathsByType.resources || []) {
+    deleteByPublicPath(resource.fileUrl);
+  }
 }
 
 function shouldRemoveThumbnail(body) {
@@ -233,6 +364,12 @@ module.exports = {
   publicPathToAbsolute,
   isManagedUploadPath,
   deleteByPublicPath,
+  serializeResources,
+  collectResourceFileUrls,
+  diffRemovedResourceFiles,
+  cleanupRemovedResources,
+  resolveResourceFileIndexes,
+  applyResourceFilesToBody,
   serializeCurriculum,
   collectCurriculumVideoUrls,
   diffRemovedCurriculumVideos,
@@ -240,6 +377,7 @@ module.exports = {
   findLessonIndices,
   getLessonVideoUrl,
   setCourseCurriculum,
+  setCourseResources,
   setLessonVideoUrl,
   applyLessonVideoToBody,
   applyCourseFields,

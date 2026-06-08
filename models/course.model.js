@@ -56,6 +56,21 @@ const detailsSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const resourceSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    title: { type: String, default: "" },
+    description: { type: String, default: "" },
+    fileUrl: { type: String, default: "" },
+    fileName: { type: String, default: "" },
+    fileSize: { type: Number, default: 0 },
+    mimeType: { type: String, default: "" },
+    sortOrder: { type: Number, default: 0 },
+    isVisible: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
 const instructorSchema = new mongoose.Schema(
   {
     instructorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
@@ -108,6 +123,7 @@ const courseSchema = new mongoose.Schema(
       }),
     },
     curriculum: { type: [moduleSchema], default: [] },
+    resources: { type: [resourceSchema], default: [] },
     details: {
       type: detailsSchema,
       default: () => ({

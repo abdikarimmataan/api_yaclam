@@ -57,7 +57,6 @@ module.exports = {
       const saved = await blogPost.save();
       return Response.successResponse(res, 201, formatPost(saved));
     } catch (err) {
-      if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
@@ -134,7 +133,6 @@ module.exports = {
       const updated = await blogPost.save();
       return Response.successResponse(res, 200, formatPost(updated));
     } catch (err) {
-      if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
       return Response.errorResponse(res, 500, err.message || err);
     }
   },

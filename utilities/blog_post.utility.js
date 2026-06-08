@@ -1,3 +1,5 @@
+const { parseDeadlineDate: parsePublishedDate } = require("./scholarship.utility");
+
 function parseBody(raw) {
   if (raw === undefined || raw === null) return undefined;
   if (Array.isArray(raw)) {
@@ -43,6 +45,13 @@ function buildBlogPostPayload(raw = {}, { userId, category } = {}) {
   }
   if (body.date !== undefined && body.publishedDate === undefined) {
     body.publishedDate = body.date;
+  }
+  if (body.publishedDate !== undefined) {
+    const parsedPublishedDate = parsePublishedDate(body.publishedDate);
+    if (body.publishedDate && parsedPublishedDate === null) {
+      throw new Error("publishedDate must be a valid date");
+    }
+    body.publishedDate = parsedPublishedDate;
   }
   if (body.readTime !== undefined) {
     const readTime = Number(body.readTime);

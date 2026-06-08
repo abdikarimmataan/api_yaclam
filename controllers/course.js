@@ -7,7 +7,7 @@ const Field = require("../models/field.model");
 const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
-const { parseCourseBody, normalizeCurriculum, syncFlatFields } = require("../utilities/course.utility");
+const { parseCourseBody, normalizeCurriculum, normalizeResources, syncFlatFields } = require("../utilities/course.utility");
 const {
   collectPendingFiles,
   commitPendingFiles,
@@ -15,8 +15,11 @@ const {
   rollbackCommittedPaths,
   deleteByPublicPath,
   applyLessonVideoToBody,
+  applyResourceFilesToBody,
   applyCourseFields,
   cleanupCurriculumVideos,
+  cleanupRemovedResources,
+  resolveResourceFileIndexes,
   serializeCurriculum,
   setLessonVideoUrl,
   getLessonVideoUrl,
@@ -25,7 +28,7 @@ const {
 } = require("../utilities/course-upload.utility");
 const { toPublicPath } = require("../middlewares/upload.middleware");
 
-const { THUMBNAIL_MAX_BYTES, VIDEO_MAX_BYTES } = require("../middlewares/upload.middleware");
+const { THUMBNAIL_MAX_BYTES, VIDEO_MAX_BYTES, RESOURCE_MAX_BYTES } = require("../middlewares/upload.middleware");
 
 function formatMb(bytes) {
   return `${Math.round(bytes / (1024 * 1024))} MB`;
@@ -35,7 +38,13 @@ function handleUploadError(err, res) {
   if (err?.code === "LIMIT_FILE_SIZE") {
     const field = err?.field || "file";
     const isVideo = field === "video";
-    const maxLabel = isVideo ? formatMb(VIDEO_MAX_BYTES) : formatMb(THUMBNAIL_MAX_BYTES);
+    const isResource = field === "resourceFiles";
+    const maxBytes = isVideo
+      ? VIDEO_MAX_BYTES
+      : isResource
+        ? RESOURCE_MAX_BYTES
+        : THUMBNAIL_MAX_BYTES;
+    const maxLabel = formatMb(maxBytes);
     return Response.errorResponse(res, 400, {
       message: `File is too large. Max ${field} size is ${maxLabel}.`,
     });
@@ -49,9 +58,14 @@ function handleUploadError(err, res) {
 function buildCoursePayload(raw, { courseKey } = {}) {
   let body = syncFlatFields(parseCourseBody(raw));
 
+  const key = courseKey || body.title || "course";
+
   if (body.curriculum !== undefined) {
-    const key = courseKey || body.title || "course";
     body.curriculum = normalizeCurriculum(body.curriculum, key);
+  }
+
+  if (body.resources !== undefined) {
+    body.resources = normalizeResources(body.resources, key);
   }
 
   if (body.overview && body.description && !body.overview.description) {
@@ -88,6 +102,18 @@ function applyCommittedUploads(body, committed) {
   return body;
 }
 
+function validatePendingFileSizes(pending) {
+  for (const entry of pending) {
+    if (entry.type !== "resource") continue;
+    if (entry.file.size > RESOURCE_MAX_BYTES) {
+      const err = new Error(`File is too large. Max resourceFiles size is ${formatMb(RESOURCE_MAX_BYTES)}.`);
+      err.code = "LIMIT_FILE_SIZE";
+      err.field = "resourceFiles";
+      throw err;
+    }
+  }
+}
+
 async function validateField(fieldId) {
   if (!isValidObjectId(fieldId)) {
     return { error: "fieldId is required and must be a valid id" };
@@ -115,11 +141,19 @@ module.exports = {
       }
 
       if (pendingFiles.length) {
+        validatePendingFileSizes(pendingFiles);
         committed = commitPendingFiles(pendingFiles);
         body = applyCommittedUploads(body, committed);
         if (committed.video) {
           const applied = applyLessonVideoToBody(body, committed.video, null);
           body = applied.body;
+        }
+        if (committed.resources?.length) {
+          body = applyResourceFilesToBody(
+            body,
+            committed.resources,
+            resolveResourceFileIndexes(body, committed.resources.length)
+          );
         }
       }
 
@@ -127,11 +161,15 @@ module.exports = {
       if (body.curriculum !== undefined) {
         course.markModified("curriculum");
       }
+      if (body.resources !== undefined) {
+        course.markModified("resources");
+      }
       const saved = await course.save();
       return Response.successResponse(res, 201, saved);
     } catch (err) {
       if (committed) rollbackCommittedPaths(committed);
       rollbackPendingFiles(pendingFiles);
+      if (err?.code === "LIMIT_FILE_SIZE") return handleUploadError(err, res);
       if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
       return Response.errorResponse(res, 500, err.message || err);
     }
@@ -211,6 +249,7 @@ module.exports = {
 
       const oldThumbnail = course.thumbnail;
       const oldCurriculum = course.curriculum ? JSON.parse(JSON.stringify(course.curriculum)) : [];
+      const oldResources = course.resources ? JSON.parse(JSON.stringify(course.resources)) : [];
 
       let body = buildCoursePayload(req.body, { courseKey: course._id.toString() });
       const removeThumbnail = shouldRemoveThumbnail(body);
@@ -229,12 +268,20 @@ module.exports = {
       let replacedLessonVideoUrl = null;
 
       if (pendingFiles.length) {
+        validatePendingFileSizes(pendingFiles);
         committed = commitPendingFiles(pendingFiles);
         body = applyCommittedUploads(body, committed);
         if (committed.video) {
           const applied = applyLessonVideoToBody(body, committed.video, course);
           body = applied.body;
           replacedLessonVideoUrl = applied.replacedVideoUrl;
+        }
+        if (committed.resources?.length) {
+          body = applyResourceFilesToBody(
+            body,
+            committed.resources,
+            resolveResourceFileIndexes(body, committed.resources.length)
+          );
         }
       }
 
@@ -255,17 +302,26 @@ module.exports = {
         deleteByPublicPath(oldThumbnail);
       }
 
-      const keepUrls = [committed?.video, committed?.thumbnail].filter(Boolean);
+      const keepUrls = [
+        committed?.video,
+        committed?.thumbnail,
+        ...(committed?.resources || []).map((resource) => resource.fileUrl),
+      ].filter(Boolean);
       if (body.curriculum !== undefined || committed?.video) {
         cleanupCurriculumVideos(oldCurriculum, updated.curriculum, { keepUrls });
       } else if (replacedLessonVideoUrl && committed?.video) {
         deleteByPublicPath(replacedLessonVideoUrl);
       }
 
+      if (body.resources !== undefined || committed?.resources?.length) {
+        cleanupRemovedResources(oldResources, updated.resources, { keepUrls });
+      }
+
       return Response.successResponse(res, 200, updated);
     } catch (err) {
       if (committed) rollbackCommittedPaths(committed);
       rollbackPendingFiles(pendingFiles);
+      if (err?.code === "LIMIT_FILE_SIZE") return handleUploadError(err, res);
       if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
       return Response.errorResponse(res, 500, err.message || err);
     }

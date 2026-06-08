@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const { parseDeadlineDate: parsePublishedDate } = require("../utilities/scholarship.utility");
 
 const bodyField = Joi.alternatives().try(
   Joi.array().items(Joi.string()),
@@ -12,8 +13,30 @@ const baseFields = {
   content: Joi.string().allow("").optional(),
   categoryId: Joi.string().optional(),
   readTime: Joi.number().min(0).optional(),
-  publishedDate: Joi.string().allow("").optional(),
-  date: Joi.string().allow("").optional(),
+  publishedDate: Joi.alternatives()
+    .try(Joi.date(), Joi.string().trim().allow(""))
+    .optional()
+    .custom((value, helpers) => {
+      if (value === undefined || value === null || value === "") return value;
+      const parsed = parsePublishedDate(value);
+      if (parsed === null) return helpers.error("any.invalid");
+      return parsed;
+    })
+    .messages({
+      "any.invalid": "publishedDate must be a valid date (e.g. 2026-02-25 or Feb 25, 2026)",
+    }),
+  date: Joi.alternatives()
+    .try(Joi.date(), Joi.string().trim().allow(""))
+    .optional()
+    .custom((value, helpers) => {
+      if (value === undefined || value === null || value === "") return value;
+      const parsed = parsePublishedDate(value);
+      if (parsed === null) return helpers.error("any.invalid");
+      return parsed;
+    })
+    .messages({
+      "any.invalid": "date must be a valid date (e.g. 2026-02-25 or Feb 25, 2026)",
+    }),
   coverImage: Joi.string().allow("").optional(),
   tags: Joi.array().items(Joi.string()).optional(),
   color: Joi.string().allow("").optional(),

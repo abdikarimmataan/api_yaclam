@@ -45,5 +45,9 @@ router.use("/blog_posts", require("./blog_post"));
 router.use("/cart", require("./cart"));
 router.use("/newsletter", require("./newsletter"));
 router.use("/role", require("./role"));
+router.use("/instructor_role", require("./instructor_role"));
+router.use("/instructor_roles", require("./instructor_role"));
+router.use("/instructor", require("./instructor"));
+router.use("/instructors", require("./instructor"));
 
 module.exports = router;

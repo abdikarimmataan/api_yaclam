@@ -14,10 +14,22 @@ const profileSchema = Joi.object({
 
 module.exports = {
   registerSchema: Joi.object({
+    fullname: Joi.string().trim().required(),
     email: Joi.string().email().required(),
     password: passwordRule.required(),
-    phone: Joi.string().allow("").optional(),
-    profile: profileSchema.required(),
+    status: Joi.boolean().default(true),
+  }),
+
+  forgotPasswordSchema: Joi.object({
+    email: Joi.string().email().required(),
+  }),
+
+  resetPasswordSchema: Joi.object({
+    token: Joi.string().required(),
+    newPassword: passwordRule.required(),
+    confirmPassword: Joi.string().valid(Joi.ref("newPassword")).required().messages({
+      "any.only": "Passwords do not match",
+    }),
   }),
 
   loginSchema: Joi.object({
@@ -52,6 +64,8 @@ module.exports = {
   passwordChangeSchema: Joi.object({
     currentPassword: Joi.string().required(),
     newPassword: passwordRule.required(),
-    confirmPassword: Joi.string().required(),
+    confirmPassword: Joi.string().valid(Joi.ref("newPassword")).required().messages({
+      "any.only": "Passwords do not match",
+    }),
   }),
 };
