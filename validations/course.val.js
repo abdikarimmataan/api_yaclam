@@ -27,8 +27,6 @@ const overviewSchema = Joi.object({
 const detailsSchema = Joi.object({
   skillLevel: Joi.string().allow("").optional(),
   language: Joi.string().allow("").optional(),
-  durationHours: Joi.number().min(0).optional(),
-  lessonCount: Joi.number().min(0).optional(),
   certificate: Joi.boolean().optional(),
   access: Joi.string().allow("").optional(),
 });
@@ -69,23 +67,28 @@ const baseFields = {
   instructorId: Joi.string().allow("", null).optional(),
   instructorName: Joi.string().allow("").optional(),
   thumbnail: Joi.string().allow("").optional(),
-  price: Joi.number().min(0).optional(),
-  originalPrice: Joi.number().min(0).optional(),
+  previewVideoUrl: Joi.string().allow("").optional(),
+  price: Joi.number().min(0).precision(2).optional(),
+  originalPrice: Joi.number().min(0).precision(2).optional(),
   isFree: Joi.boolean().optional(),
   isFeatured: Joi.boolean().optional(),
   isPublished: Joi.boolean().optional(),
   isVisible: Joi.boolean().optional(),
-  durationHours: Joi.number().min(0).optional(),
-  lessonCount: Joi.number().min(0).optional(),
-  rating: Joi.number().optional(),
-  reviewCount: Joi.number().optional(),
-  studentCount: Joi.number().optional(),
   sortOrder: Joi.number().optional(),
   status: Joi.boolean().optional(),
   overview: overviewSchema.optional(),
   curriculum: Joi.array().items(moduleSchema).optional(),
   resources: Joi.array().items(resourceSchema).optional(),
   resourceFileIndexes: Joi.array().items(Joi.number().integer().min(0)).optional(),
+  lessonVideoTargets: Joi.array()
+    .items(
+      Joi.object({
+        moduleIndex: Joi.number().integer().min(0).required(),
+        lessonIndex: Joi.number().integer().min(0).required(),
+        lessonId: Joi.string().allow("").optional(),
+      })
+    )
+    .optional(),
   details: detailsSchema.optional(),
   instructor: instructorSchema.optional(),
   removeThumbnail: Joi.boolean().optional(),

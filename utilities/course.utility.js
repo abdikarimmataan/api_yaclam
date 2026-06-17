@@ -1,3 +1,7 @@
+const { parseMoney } = require("./money.utility");
+const { computeCurriculumStats } = require("./course-curriculum-stats.utility");
+const { stripManualCourseStats } = require("./course-stats.utility");
+
 const JSON_FIELDS = [
   "overview",
   "curriculum",
@@ -8,6 +12,7 @@ const JSON_FIELDS = [
   "ctaButton",
   "wishlistButton",
   "resourceFileIndexes",
+  "lessonVideoTargets",
 ];
 const { normalizeManagedPath } = require("./course-upload.utility");
 
@@ -44,19 +49,27 @@ function parseCourseBody(raw = {}) {
   if (body.isFree === "false" || body.isFree === "0") body.isFree = false;
   if (body.isFeatured === "true") body.isFeatured = true;
   if (body.isFeatured === "false") body.isFeatured = false;
-  if (body.isPublished === "true") body.isPublished = true;
-  if (body.isPublished === "false") body.isPublished = false;
-  if (body.isVisible === "true") body.isVisible = true;
-  if (body.isVisible === "false") body.isVisible = false;
+  if (body.isPublished === "true" || body.isPublished === "1") body.isPublished = true;
+  if (body.isPublished === "false" || body.isPublished === "0") body.isPublished = false;
+  if (body.isVisible === "true" || body.isVisible === "1") body.isVisible = true;
+  if (body.isVisible === "false" || body.isVisible === "0") body.isVisible = false;
+  if (body.status === "true" || body.status === "1") body.status = true;
+  if (body.status === "false" || body.status === "0") body.status = false;
   if (body.certificate === "true") body.certificate = true;
   if (body.certificate === "false") body.certificate = false;
   if (body.removeThumbnail === "true" || body.removeThumbnail === "1") body.removeThumbnail = true;
 
-  ["price", "originalPrice", "durationHours", "lessonCount", "rating", "reviewCount", "studentCount", "sortOrder", "moduleIndex", "lessonIndex"].forEach(
+  ["sortOrder", "moduleIndex", "lessonIndex"].forEach(
     (key) => {
       if (body[key] !== undefined && body[key] !== "") body[key] = Number(body[key]);
     }
   );
+
+  stripManualCourseStats(body);
+
+  ["price", "originalPrice"].forEach((key) => {
+    if (body[key] !== undefined && body[key] !== "") body[key] = parseMoney(body[key]);
+  });
 
   delete body.slug;
 
@@ -133,7 +146,6 @@ function syncFlatFields(payload) {
 
   if (data.details && typeof data.details === "object") {
     if (data.details.skillLevel) data.level = data.details.skillLevel;
-    if (data.details.durationHours != null) data.durationHours = data.details.durationHours;
     if (data.details.language) data.language = data.details.language;
   }
 
@@ -145,12 +157,15 @@ function syncFlatFields(payload) {
   }
 
   if (Array.isArray(data.curriculum)) {
-    const count = countLessons(data.curriculum);
-    if (count > 0) data.lessonCount = count;
-  }
-
-  if (data.durationHours && !data.duration) {
-    data.duration = `${data.durationHours} hours`;
+    const stats = computeCurriculumStats(data.curriculum);
+    data.lessonCount = stats.lessonCount;
+    data.durationHours = stats.durationHours;
+    if (!data.details) data.details = {};
+    data.details.lessonCount = stats.lessonCount;
+    data.details.durationHours = stats.durationHours;
+    if (stats.durationHours > 0) {
+      data.duration = `${stats.durationHours} hours`;
+    }
   }
 
   return data;

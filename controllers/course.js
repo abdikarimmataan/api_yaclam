@@ -8,6 +8,7 @@ const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
 const { parseCourseBody, normalizeCurriculum, normalizeResources, syncFlatFields } = require("../utilities/course.utility");
+const { applyComputedStatsToPayload } = require("../utilities/course-stats.utility");
 const {
   collectPendingFiles,
   commitPendingFiles,
@@ -15,6 +16,8 @@ const {
   rollbackCommittedPaths,
   deleteByPublicPath,
   applyLessonVideoToBody,
+  applyPreviewVideoToBody,
+  applyLessonVideosToBody,
   applyResourceFilesToBody,
   applyCourseFields,
   cleanupCurriculumVideos,
@@ -27,6 +30,7 @@ const {
   shouldRemoveThumbnail,
 } = require("../utilities/course-upload.utility");
 const { toPublicPath } = require("../middlewares/upload.middleware");
+const { computeCurriculumStats } = require("../utilities/course-curriculum-stats.utility");
 
 const { THUMBNAIL_MAX_BYTES, VIDEO_MAX_BYTES, RESOURCE_MAX_BYTES } = require("../middlewares/upload.middleware");
 
@@ -82,19 +86,16 @@ function buildCoursePayload(raw, { courseKey } = {}) {
     body.details = {
       skillLevel: body.details.skillLevel || body.level || "Beginner",
       language: body.details.language || body.language || "Somali",
-      durationHours: body.details.durationHours ?? body.durationHours ?? 0,
-      lessonCount: body.details.lessonCount ?? body.lessonCount ?? 0,
       certificate: body.details.certificate ?? body.certificate ?? true,
       access: body.details.access || body.access || "1 Year",
     };
     body.level = body.details.skillLevel;
     body.language = body.details.language;
-    body.durationHours = body.details.durationHours;
     body.certificate = body.details.certificate;
     body.access = body.details.access;
   }
 
-  return body;
+  return applyComputedStatsToPayload(body);
 }
 
 function applyCommittedUploads(body, committed) {
@@ -104,12 +105,22 @@ function applyCommittedUploads(body, committed) {
 
 function validatePendingFileSizes(pending) {
   for (const entry of pending) {
-    if (entry.type !== "resource") continue;
-    if (entry.file.size > RESOURCE_MAX_BYTES) {
-      const err = new Error(`File is too large. Max resourceFiles size is ${formatMb(RESOURCE_MAX_BYTES)}.`);
-      err.code = "LIMIT_FILE_SIZE";
-      err.field = "resourceFiles";
-      throw err;
+    if (entry.type === "resource") {
+      if (entry.file.size > RESOURCE_MAX_BYTES) {
+        const err = new Error(`File is too large. Max resourceFiles size is ${formatMb(RESOURCE_MAX_BYTES)}.`);
+        err.code = "LIMIT_FILE_SIZE";
+        err.field = "resourceFiles";
+        throw err;
+      }
+      continue;
+    }
+    if (entry.type === "video" || entry.type === "lessonVideo") {
+      if (entry.file.size > VIDEO_MAX_BYTES) {
+        const err = new Error(`File is too large. Max video size is ${formatMb(VIDEO_MAX_BYTES)}.`);
+        err.code = "LIMIT_FILE_SIZE";
+        err.field = entry.type === "lessonVideo" ? "lessonVideos" : "video";
+        throw err;
+      }
     }
   }
 }
@@ -144,8 +155,16 @@ module.exports = {
         validatePendingFileSizes(pendingFiles);
         committed = commitPendingFiles(pendingFiles);
         body = applyCommittedUploads(body, committed);
-        if (committed.video) {
-          const applied = applyLessonVideoToBody(body, committed.video, null);
+        if (committed.lessonVideos?.length) {
+          const applied = applyLessonVideosToBody(
+            body,
+            committed.lessonVideos,
+            body.lessonVideoTargets,
+            null
+          );
+          body = applied.body;
+        } else if (committed.video) {
+          const applied = applyPreviewVideoToBody(body, committed.video, null);
           body = applied.body;
         }
         if (committed.resources?.length) {
@@ -170,7 +189,6 @@ module.exports = {
       if (committed) rollbackCommittedPaths(committed);
       rollbackPendingFiles(pendingFiles);
       if (err?.code === "LIMIT_FILE_SIZE") return handleUploadError(err, res);
-      if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
@@ -230,6 +248,54 @@ module.exports = {
     }
   },
 
+  getcourseByinstructort: async (req, res) => {
+    try {
+      const { instructorId } = req.params;
+      if (!isValidObjectId(instructorId)) {
+        return Response.errorResponse(res, 400, { message: ResponseMessage.INVALID_ID });
+      }
+
+      const instructorObjectId = new mongoose.Types.ObjectId(instructorId);
+      const filter = {
+        del_status: "Live",
+        $or: [
+          { "instructor.instructorId": instructorObjectId },
+          { instructorId: instructorObjectId },
+        ],
+      };
+
+      if (req.query.isFree === "true") filter.isFree = true;
+      if (req.query.isFeatured === "true") filter.isFeatured = true;
+      if (req.query.category) filter.category = req.query.category;
+
+      const total = await Course.countDocuments(filter);
+      const { pagination, skip } = await PaginationUtility.paginationParams(req, total);
+
+      if (total === 0) {
+        return Response.customResponse(res, 200, ResponseMessage.NO_DATA);
+      }
+
+      if (pagination.page > pagination.pages) {
+        return Response.customResponse(res, 200, ResponseMessage.OUTOF_DATA);
+      }
+
+      pagination.data = await Course.find(filter)
+        .populate("fieldId", "name icon")
+        .populate("instructor.instructorId", "email profile.full_name profile.avatar_url")
+        .sort({ sortOrder: 1, created_at: -1 })
+        .skip(skip)
+        .limit(pagination.pageSize);
+
+      if (!pagination.data || pagination.data.length === 0) {
+        return Response.customResponse(res, 200, ResponseMessage.NO_DATA);
+      }
+
+      return Response.paginationResponse(res, 200, pagination);
+    } catch (err) {
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
   update: async (req, res) => {
     const pendingFiles = collectPendingFiles(req);
     let committed = null;
@@ -265,16 +331,26 @@ module.exports = {
         }
       }
 
-      let replacedLessonVideoUrl = null;
+      let replacedPreviewVideoUrl = null;
+      let replacedLessonVideoUrls = [];
 
       if (pendingFiles.length) {
         validatePendingFileSizes(pendingFiles);
         committed = commitPendingFiles(pendingFiles);
         body = applyCommittedUploads(body, committed);
-        if (committed.video) {
-          const applied = applyLessonVideoToBody(body, committed.video, course);
+        if (committed.lessonVideos?.length) {
+          const applied = applyLessonVideosToBody(
+            body,
+            committed.lessonVideos,
+            body.lessonVideoTargets,
+            course
+          );
           body = applied.body;
-          replacedLessonVideoUrl = applied.replacedVideoUrl;
+          replacedLessonVideoUrls = applied.replacedVideoUrls;
+        } else if (committed.video) {
+          const applied = applyPreviewVideoToBody(body, committed.video, course);
+          body = applied.body;
+          replacedPreviewVideoUrl = applied.replacedVideoUrl;
         }
         if (committed.resources?.length) {
           body = applyResourceFilesToBody(
@@ -292,6 +368,7 @@ module.exports = {
       delete body.moduleIndex;
       delete body.lessonIndex;
       delete body.lessonId;
+      delete body.lessonVideoTargets;
 
       applyCourseFields(course, body);
       const updated = await course.save();
@@ -305,13 +382,19 @@ module.exports = {
       const keepUrls = [
         committed?.video,
         committed?.thumbnail,
+        updated.previewVideoUrl,
+        ...(committed?.lessonVideos || []),
         ...(committed?.resources || []).map((resource) => resource.fileUrl),
       ].filter(Boolean);
-      if (body.curriculum !== undefined || committed?.video) {
+      if (body.curriculum !== undefined || committed?.lessonVideos?.length) {
         cleanupCurriculumVideos(oldCurriculum, updated.curriculum, { keepUrls });
-      } else if (replacedLessonVideoUrl && committed?.video) {
-        deleteByPublicPath(replacedLessonVideoUrl);
       }
+      if (replacedPreviewVideoUrl && committed?.video) {
+        deleteByPublicPath(replacedPreviewVideoUrl);
+      }
+      replacedLessonVideoUrls.forEach((url) => {
+        if (!keepUrls.includes(url)) deleteByPublicPath(url);
+      });
 
       if (body.resources !== undefined || committed?.resources?.length) {
         cleanupRemovedResources(oldResources, updated.resources, { keepUrls });
@@ -322,7 +405,6 @@ module.exports = {
       if (committed) rollbackCommittedPaths(committed);
       rollbackPendingFiles(pendingFiles);
       if (err?.code === "LIMIT_FILE_SIZE") return handleUploadError(err, res);
-      if (err?.code === 11000) return Response.customResponse(res, 409, ResponseMessage.DATA_EXISTS);
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
@@ -382,17 +464,22 @@ module.exports = {
       const target = findLessonIndices(course.curriculum, { moduleIndex, lessonIndex, lessonId });
       if (!target) {
         rollbackPendingFiles(pending);
-        return Response.errorResponse(res, 400, { message: "Invalid moduleIndex, lessonIndex, or lessonId" });
+        return Response.errorResponse(res, 400, {
+          message: "Lesson not found in curriculum. Save curriculum first, then upload video.",
+        });
       }
 
       const oldVideoUrl = getLessonVideoUrl(course.curriculum, target.mi, target.li);
       committedVideoUrl = commitPendingFiles(pending).video;
 
-      const saved = setLessonVideoUrl(course, target.mi, target.li, committedVideoUrl);
+      const duration = String(body.duration ?? "").trim();
+      const saved = setLessonVideoUrl(course, target.mi, target.li, committedVideoUrl, duration);
       if (!saved) {
         rollbackPendingFiles(pending);
         if (committedVideoUrl) deleteByPublicPath(committedVideoUrl);
-        return Response.errorResponse(res, 400, { message: "Lesson not found in curriculum" });
+        return Response.errorResponse(res, 400, {
+          message: "Lesson not found in curriculum. Save curriculum first, then upload video.",
+        });
       }
 
       await course.save();
@@ -433,6 +520,63 @@ module.exports = {
       );
       if (!course) return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
       return Response.successResponse(res, 200, course);
+    } catch (err) {
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  getVideoHours: async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!isValidObjectId(id)) {
+        return Response.errorResponse(res, 400, { message: ResponseMessage.INVALID_ID });
+      }
+
+      const course = await Course.findOne({ _id: id, del_status: "Live" }).select("curriculum");
+      if (!course) {
+        return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
+      }
+
+      const stats = computeCurriculumStats(course.curriculum);
+      return Response.successResponse(res, 200, {
+        courseId: id,
+        durationHours: stats.durationHours,
+        lessonCount: stats.lessonCount,
+      });
+    } catch (err) {
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  getVideoHoursBatch: async (req, res) => {
+    try {
+      const raw = String(req.query.ids ?? "").trim();
+      const ids = raw
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => isValidObjectId(id));
+
+      if (!ids.length) {
+        return Response.successResponse(res, 200, { courses: {} });
+      }
+
+      const courses = await Course.find({ _id: { $in: ids }, del_status: "Live" }).select(
+        "curriculum"
+      );
+      const coursesMap = {};
+      for (const id of ids) {
+        coursesMap[id] = { durationHours: 0, lessonCount: 0 };
+      }
+
+      for (const course of courses) {
+        const stats = computeCurriculumStats(course.curriculum);
+        coursesMap[String(course._id)] = {
+          durationHours: stats.durationHours,
+          lessonCount: stats.lessonCount,
+        };
+      }
+
+      return Response.successResponse(res, 200, { courses: coursesMap });
     } catch (err) {
       return Response.errorResponse(res, 500, err.message || err);
     }

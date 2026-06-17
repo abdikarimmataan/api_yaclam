@@ -28,6 +28,9 @@ function optionalMultipart(multerMiddleware) {
 router.use(auth.authorize());
 router.use(requireInstructor);
 
+router.get("/overview", courseInstructorController.getOverview);
+router.get("/students", courseInstructorController.getStudents);
+router.get("/reviews", courseInstructorController.getReviews);
 router.get("/getAll", courseInstructorController.getAll);
 router.get("/getById/:id", courseInstructorController.getById);
 

@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
+const { computeCurriculumStats } = require("../utilities/course-curriculum-stats.utility");
 const { toJSON } = require("../utilities/toJson.utility");
+const { parseMoney } = require("../utilities/money.utility");
 
 const buttonSchema = new mongoose.Schema(
   {
@@ -88,7 +90,7 @@ const instructorSchema = new mongoose.Schema(
 
 const courseSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true, trim: true, unique: true },
+    title: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     shortDescription: { type: String, default: "" },
     category: { type: String, default: "" },
@@ -103,8 +105,9 @@ const courseSchema = new mongoose.Schema(
     instructorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     instructorName: { type: String, default: "" },
     thumbnail: { type: String, default: "" },
-    price: { type: Number, default: 0 },
-    originalPrice: { type: Number, default: 0 },
+    previewVideoUrl: { type: String, default: "" },
+    price: { type: mongoose.Schema.Types.Double, default: 0, set: parseMoney },
+    originalPrice: { type: mongoose.Schema.Types.Double, default: 0, set: parseMoney },
     isFree: { type: Boolean, default: false },
     isFeatured: { type: Boolean, default: false },
     isPublished: { type: Boolean, default: true },
@@ -188,11 +191,15 @@ courseSchema.pre("save", function syncNestedFromFlat(next) {
     this.instructor.instructorId = this.instructorId;
   }
 
-  if (Array.isArray(this.curriculum) && this.curriculum.length) {
-    const count = this.curriculum.reduce((n, m) => n + (m.lessons?.length || 0), 0);
-    if (count > 0) {
-      this.lessonCount = count;
-      this.details.lessonCount = count;
+  if (Array.isArray(this.curriculum)) {
+    const stats = computeCurriculumStats(this.curriculum);
+    this.lessonCount = stats.lessonCount;
+    this.durationHours = stats.durationHours;
+    if (!this.details) this.details = {};
+    this.details.lessonCount = stats.lessonCount;
+    this.details.durationHours = stats.durationHours;
+    if (stats.durationHours > 0) {
+      this.duration = `${stats.durationHours} hours`;
     }
   }
 
@@ -200,4 +207,35 @@ courseSchema.pre("save", function syncNestedFromFlat(next) {
 });
 
 courseSchema.plugin(toJSON);
-module.exports = mongoose.model("Course", courseSchema, "courses");
+
+const Course = mongoose.model("Course", courseSchema, "courses");
+
+async function syncCourseTitleIndex() {
+  if (mongoose.connection.readyState !== 1) return;
+
+  const collection = mongoose.connection.collection("courses");
+  try {
+    const indexes = await collection.indexes();
+    for (const index of indexes) {
+      if (index.key?.title === 1 && index.unique) {
+        await collection.dropIndex(index.name);
+      }
+    }
+  } catch (_) {
+    // legacy unique index may already be removed
+  }
+
+  try {
+    await Course.syncIndexes();
+  } catch (_) {
+    // non-unique title index is optional
+  }
+}
+
+if (mongoose.connection.readyState === 1) {
+  syncCourseTitleIndex();
+} else {
+  mongoose.connection.once("connected", syncCourseTitleIndex);
+}
+
+module.exports = Course;
