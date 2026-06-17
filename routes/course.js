@@ -25,6 +25,9 @@ function optionalMultipart(multerMiddleware) {
 
 router.get("/getAll", courseController.getAll);
 router.get("/getById/:id", courseController.getById);
+router.get("/getcourseByinstructort/:instructorId", courseController.getcourseByinstructort);
+router.get("/video-hours", courseController.getVideoHoursBatch);
+router.get("/video-hours/:id", courseController.getVideoHours);
 
 router.use("/instructor", require("./course_instructor"));
 

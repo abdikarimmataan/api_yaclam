@@ -68,6 +68,7 @@ const createFilesFilter = (req, file, cb) => {
   if (file.fieldname === "thumbnail") return imageFilter(req, file, cb);
   if (file.fieldname === "video") return videoFilter(req, file, cb);
   if (file.fieldname === "resourceFiles") return resourceFilter(req, file, cb);
+  if (file.fieldname === "lessonVideos") return videoFilter(req, file, cb);
   cb(new Error(`Unexpected field: ${file.fieldname}`), false);
 };
 
@@ -100,6 +101,7 @@ module.exports = {
     { name: "thumbnail", maxCount: 1 },
     { name: "video", maxCount: 1 },
     { name: "resourceFiles", maxCount: 20 },
+    { name: "lessonVideos", maxCount: 50 },
   ]),
 
   /** Lesson video — tmp until course.save() succeeds */

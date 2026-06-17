@@ -11,9 +11,11 @@
     "seed:countries": "node scripts/seed-countries.js",
     "download:flags": "node scripts/download-country-flags.js",
     "migrate:flags": "node scripts/migrate-flag-urls.js",
-    "postman": "node scripts/generate-postman.js"
+    "postman": "node scripts/generate-postman.js",
+    "migrate:course-prices": "node scripts/migrate-course-prices-to-double.js"
   },
   "dependencies": {
+    "axios": "^1.18.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
