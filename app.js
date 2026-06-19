@@ -11,6 +11,7 @@ const app = express();
 
 const allowedOrigins = [
   "https://yaclam.com",
+  "https://admin.yaclam.com",
   "http://localhost:5173",
   "http://localhost:3000",
   "http://localhost:3001",
