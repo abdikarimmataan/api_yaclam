@@ -138,6 +138,8 @@ function setLessonVideoUrl(course, moduleIndex, lessonIndex, videoUrl, duration)
   const curriculum = serializeCurriculum(course.curriculum);
   if (!curriculum[moduleIndex]?.lessons?.[lessonIndex]) return false;
   curriculum[moduleIndex].lessons[lessonIndex].videoUrl = normalizeManagedPath(videoUrl);
+  curriculum[moduleIndex].lessons[lessonIndex].lessonType = "video";
+  curriculum[moduleIndex].lessons[lessonIndex].linkUrl = "";
   if (duration !== undefined && duration !== null) {
     curriculum[moduleIndex].lessons[lessonIndex].duration = String(duration).trim();
   }
@@ -309,6 +311,8 @@ function applyLessonVideosToBody(body, committedVideos, targetsRaw, course) {
     const normalizedVideo = normalizeManagedPath(videoUrl) || videoUrl;
     if (!body.curriculum[indices.mi]?.lessons?.[indices.li]) return;
     body.curriculum[indices.mi].lessons[indices.li].videoUrl = normalizedVideo;
+    body.curriculum[indices.mi].lessons[indices.li].lessonType = "video";
+    body.curriculum[indices.mi].lessons[indices.li].linkUrl = "";
   });
 
   delete body.lessonVideoTargets;

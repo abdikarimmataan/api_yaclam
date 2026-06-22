@@ -117,16 +117,26 @@ function normalizeCurriculum(curriculum, courseKey = "course") {
       title: String(mod.title ?? "").trim(),
       sortOrder: Number(mod.sortOrder ?? mi),
       isVisible: mod.isVisible !== false,
-      lessons: lessons.map((lesson, li) => ({
-        id: String(lesson.id ?? lessonId(courseKey, mi, li)).trim(),
-        title: String(lesson.title ?? "").trim(),
-        duration: String(lesson.duration ?? ""),
-        free: !!lesson.free,
-        videoUrl: normalizeManagedPath(String(lesson.videoUrl ?? "")),
-        vimeoId: String(lesson.vimeoId ?? ""),
-        sortOrder: Number(lesson.sortOrder ?? li),
-        isVisible: lesson.isVisible !== false,
-      })),
+      lessons: lessons.map((lesson, li) => {
+        const rawLink = String(lesson.linkUrl ?? "").trim();
+        const rawVideo = normalizeManagedPath(String(lesson.videoUrl ?? ""));
+        let lessonType = lesson.lessonType === "link" ? "link" : lesson.lessonType === "video" ? "video" : null;
+        if (!lessonType) {
+          lessonType = rawLink && !rawVideo ? "link" : "video";
+        }
+        return {
+          id: String(lesson.id ?? lessonId(courseKey, mi, li)).trim(),
+          title: String(lesson.title ?? "").trim(),
+          duration: String(lesson.duration ?? ""),
+          free: !!lesson.free,
+          lessonType,
+          videoUrl: lessonType === "video" ? rawVideo : "",
+          linkUrl: lessonType === "link" ? rawLink : "",
+          vimeoId: String(lesson.vimeoId ?? ""),
+          sortOrder: Number(lesson.sortOrder ?? li),
+          isVisible: lesson.isVisible !== false,
+        };
+      }),
     };
   });
 }
