@@ -39,4 +39,4 @@ const updateSchema = Joi.object({
   }).optional(),
 }).unknown(false);
 
-module.exports = { updateSchema };
+module.exports = { createSchema: updateSchema, updateSchema };
