@@ -8,15 +8,18 @@ const COURSE_VIDEOS = path.join(UPLOAD_ROOT, "courses", "videos");
 const COURSE_RESOURCES = path.join(UPLOAD_ROOT, "courses", "resources");
 const COURSE_TMP = path.join(UPLOAD_ROOT, "courses", "_tmp");
 const INSTRUCTOR_PHOTOS = path.join(UPLOAD_ROOT, "instructors", "photos");
+const SETTINGS_LOGOS = path.join(UPLOAD_ROOT, "settings", "logos");
 
 /** Max upload sizes — adjust here if needed */
 const THUMBNAIL_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 const VIDEO_MAX_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
 const RESOURCE_MAX_BYTES = 100 * 1024 * 1024; // 100 MB
 
-[COURSE_THUMBNAILS, COURSE_VIDEOS, COURSE_RESOURCES, COURSE_TMP, INSTRUCTOR_PHOTOS].forEach((dir) => {
-  fs.mkdirSync(dir, { recursive: true });
-});
+[COURSE_THUMBNAILS, COURSE_VIDEOS, COURSE_RESOURCES, COURSE_TMP, INSTRUCTOR_PHOTOS, SETTINGS_LOGOS].forEach(
+  (dir) => {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+);
 
 function safeFilename(originalname) {
   const ext = path.extname(originalname).toLowerCase();
@@ -37,12 +40,20 @@ function diskStorage(destDir) {
 
 const thumbnailStorage = diskStorage(COURSE_THUMBNAILS);
 const instructorPhotoStorage = diskStorage(INSTRUCTOR_PHOTOS);
+const settingsLogoStorage = diskStorage(SETTINGS_LOGOS);
 const videoStorage = diskStorage(COURSE_VIDEOS);
 const tempStorage = diskStorage(COURSE_TMP);
 
 const imageFilter = (_req, file, cb) => {
   const ok = /image\/(jpeg|jpg|png|webp|gif)/i.test(file.mimetype);
   cb(ok ? null : new Error("Only image files (jpeg, png, webp, gif) are allowed"), ok);
+};
+
+const logoImageFilter = (_req, file, cb) => {
+  const ok =
+    /image\/(jpeg|jpg|png|webp|gif|svg\+xml)/i.test(file.mimetype) ||
+    /\.svg$/i.test(file.originalname);
+  cb(ok ? null : new Error("Only image files (jpeg, png, webp, gif, svg) are allowed"), ok);
 };
 
 const videoFilter = (_req, file, cb) => {
@@ -79,6 +90,7 @@ module.exports = {
   COURSE_RESOURCES,
   COURSE_TMP,
   INSTRUCTOR_PHOTOS,
+  SETTINGS_LOGOS,
 
   uploadCourseThumbnail: multer({
     storage: thumbnailStorage,
@@ -117,6 +129,12 @@ module.exports = {
     fileFilter: imageFilter,
   }).single("photo"),
 
+  uploadSettingsLogo: multer({
+    storage: settingsLogoStorage,
+    limits: { fileSize: THUMBNAIL_MAX_BYTES },
+    fileFilter: logoImageFilter,
+  }).single("logo"),
+
   THUMBNAIL_MAX_BYTES,
   VIDEO_MAX_BYTES,
   RESOURCE_MAX_BYTES,
@@ -124,6 +142,7 @@ module.exports = {
   toPublicPath: (filename, type = "thumbnail") => {
     if (!filename) return "";
     if (String(filename).startsWith("/uploads/")) return filename;
+    if (type === "logo") return `/uploads/settings/logos/${filename}`;
     const folder =
       type === "video"
         ? "videos"

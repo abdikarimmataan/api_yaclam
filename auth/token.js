@@ -5,7 +5,7 @@ module.exports = {
   generateToken: (userId, accountType) => {
     const payload = { userId, accountType };
     const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRES || "1d",
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRES || "3m",
       algorithm: "HS256",
       issuer: process.env.JWT_ISSUER || "YACLAM",
     });
