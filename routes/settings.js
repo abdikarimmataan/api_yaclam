@@ -28,6 +28,11 @@ router.post(
   wrapUpload(upload.uploadSettingsLogo),
   settingsController.uploadLogo
 );
+router.post(
+  "/upload/favicon",
+  wrapUpload(upload.uploadSettingsFavicon),
+  settingsController.uploadFavicon
+);
 router.post("/create", validate.validate(settingsValidation.createSchema), settingsController.create);
 router.patch("/update/:id", validate.validate(settingsValidation.updateSchema), settingsController.update);
 
