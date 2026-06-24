@@ -9,6 +9,7 @@
     "dev": "nodemon app.js",
     "seed:icons": "node scripts/seed-icons.js",
     "seed:countries": "node scripts/seed-countries.js",
+    "seed:home": "node scripts/seed-home.js",
     "download:flags": "node scripts/download-country-flags.js",
     "migrate:flags": "node scripts/migrate-flag-urls.js",
     "postman": "node scripts/generate-postman.js",
