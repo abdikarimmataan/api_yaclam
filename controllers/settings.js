@@ -79,4 +79,16 @@ module.exports = {
       return Response.errorResponse(res, 500, err.message || err);
     }
   },
+
+  uploadFavicon: async (req, res) => {
+    try {
+      if (!req.file?.filename) {
+        return Response.errorResponse(res, 400, { message: "favicon file is required" });
+      }
+      const favicon = upload.toPublicPath(req.file.filename, "favicon");
+      return Response.successResponse(res, 200, { favicon });
+    } catch (err) {
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
 };

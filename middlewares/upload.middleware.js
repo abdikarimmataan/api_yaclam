@@ -9,13 +9,22 @@ const COURSE_RESOURCES = path.join(UPLOAD_ROOT, "courses", "resources");
 const COURSE_TMP = path.join(UPLOAD_ROOT, "courses", "_tmp");
 const INSTRUCTOR_PHOTOS = path.join(UPLOAD_ROOT, "instructors", "photos");
 const SETTINGS_LOGOS = path.join(UPLOAD_ROOT, "settings", "logos");
+const SETTINGS_FAVICONS = path.join(UPLOAD_ROOT, "settings", "favicons");
 
 /** Max upload sizes — adjust here if needed */
 const THUMBNAIL_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 const VIDEO_MAX_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
 const RESOURCE_MAX_BYTES = 100 * 1024 * 1024; // 100 MB
 
-[COURSE_THUMBNAILS, COURSE_VIDEOS, COURSE_RESOURCES, COURSE_TMP, INSTRUCTOR_PHOTOS, SETTINGS_LOGOS].forEach(
+[
+  COURSE_THUMBNAILS,
+  COURSE_VIDEOS,
+  COURSE_RESOURCES,
+  COURSE_TMP,
+  INSTRUCTOR_PHOTOS,
+  SETTINGS_LOGOS,
+  SETTINGS_FAVICONS,
+].forEach(
   (dir) => {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -41,6 +50,7 @@ function diskStorage(destDir) {
 const thumbnailStorage = diskStorage(COURSE_THUMBNAILS);
 const instructorPhotoStorage = diskStorage(INSTRUCTOR_PHOTOS);
 const settingsLogoStorage = diskStorage(SETTINGS_LOGOS);
+const settingsFaviconStorage = diskStorage(SETTINGS_FAVICONS);
 const videoStorage = diskStorage(COURSE_VIDEOS);
 const tempStorage = diskStorage(COURSE_TMP);
 
@@ -54,6 +64,16 @@ const logoImageFilter = (_req, file, cb) => {
     /image\/(jpeg|jpg|png|webp|gif|svg\+xml)/i.test(file.mimetype) ||
     /\.svg$/i.test(file.originalname);
   cb(ok ? null : new Error("Only image files (jpeg, png, webp, gif, svg) are allowed"), ok);
+};
+
+const faviconImageFilter = (_req, file, cb) => {
+  const ok =
+    /image\/(jpeg|jpg|png|webp|gif|svg\+xml|x-icon|vnd\.microsoft\.icon)/i.test(file.mimetype) ||
+    /\.(svg|ico)$/i.test(file.originalname);
+  cb(
+    ok ? null : new Error("Only favicon images (ico, png, jpeg, webp, gif, svg) are allowed"),
+    ok
+  );
 };
 
 const videoFilter = (_req, file, cb) => {
@@ -91,6 +111,7 @@ module.exports = {
   COURSE_TMP,
   INSTRUCTOR_PHOTOS,
   SETTINGS_LOGOS,
+  SETTINGS_FAVICONS,
 
   uploadCourseThumbnail: multer({
     storage: thumbnailStorage,
@@ -135,6 +156,12 @@ module.exports = {
     fileFilter: logoImageFilter,
   }).single("logo"),
 
+  uploadSettingsFavicon: multer({
+    storage: settingsFaviconStorage,
+    limits: { fileSize: THUMBNAIL_MAX_BYTES },
+    fileFilter: faviconImageFilter,
+  }).single("favicon"),
+
   THUMBNAIL_MAX_BYTES,
   VIDEO_MAX_BYTES,
   RESOURCE_MAX_BYTES,
@@ -143,6 +170,7 @@ module.exports = {
     if (!filename) return "";
     if (String(filename).startsWith("/uploads/")) return filename;
     if (type === "logo") return `/uploads/settings/logos/${filename}`;
+    if (type === "favicon") return `/uploads/settings/favicons/${filename}`;
     const folder =
       type === "video"
         ? "videos"
