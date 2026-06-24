@@ -8,6 +8,7 @@ const COURSE_VIDEOS = path.join(UPLOAD_ROOT, "courses", "videos");
 const COURSE_RESOURCES = path.join(UPLOAD_ROOT, "courses", "resources");
 const COURSE_TMP = path.join(UPLOAD_ROOT, "courses", "_tmp");
 const INSTRUCTOR_PHOTOS = path.join(UPLOAD_ROOT, "instructors", "photos");
+const BLOG_COVERS = path.join(UPLOAD_ROOT, "blog", "covers");
 const SETTINGS_LOGOS = path.join(UPLOAD_ROOT, "settings", "logos");
 const SETTINGS_FAVICONS = path.join(UPLOAD_ROOT, "settings", "favicons");
 
@@ -22,6 +23,7 @@ const RESOURCE_MAX_BYTES = 100 * 1024 * 1024; // 100 MB
   COURSE_RESOURCES,
   COURSE_TMP,
   INSTRUCTOR_PHOTOS,
+  BLOG_COVERS,
   SETTINGS_LOGOS,
   SETTINGS_FAVICONS,
 ].forEach(
@@ -49,6 +51,7 @@ function diskStorage(destDir) {
 
 const thumbnailStorage = diskStorage(COURSE_THUMBNAILS);
 const instructorPhotoStorage = diskStorage(INSTRUCTOR_PHOTOS);
+const blogCoverStorage = diskStorage(BLOG_COVERS);
 const settingsLogoStorage = diskStorage(SETTINGS_LOGOS);
 const settingsFaviconStorage = diskStorage(SETTINGS_FAVICONS);
 const videoStorage = diskStorage(COURSE_VIDEOS);
@@ -110,6 +113,7 @@ module.exports = {
   COURSE_RESOURCES,
   COURSE_TMP,
   INSTRUCTOR_PHOTOS,
+  BLOG_COVERS,
   SETTINGS_LOGOS,
   SETTINGS_FAVICONS,
 
@@ -150,6 +154,12 @@ module.exports = {
     fileFilter: imageFilter,
   }).single("photo"),
 
+  uploadBlogCoverImage: multer({
+    storage: blogCoverStorage,
+    limits: { fileSize: THUMBNAIL_MAX_BYTES },
+    fileFilter: imageFilter,
+  }).single("coverImage"),
+
   uploadSettingsLogo: multer({
     storage: settingsLogoStorage,
     limits: { fileSize: THUMBNAIL_MAX_BYTES },
@@ -171,6 +181,7 @@ module.exports = {
     if (String(filename).startsWith("/uploads/")) return filename;
     if (type === "logo") return `/uploads/settings/logos/${filename}`;
     if (type === "favicon") return `/uploads/settings/favicons/${filename}`;
+    if (type === "blog") return `/uploads/blog/covers/${filename}`;
     const folder =
       type === "video"
         ? "videos"

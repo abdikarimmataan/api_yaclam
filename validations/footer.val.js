@@ -24,6 +24,7 @@ const updateSchema = Joi.object({
     linkedin: Joi.string().allow("").optional(),
     youtube: Joi.string().allow("").optional(),
     instagram: Joi.string().allow("").optional(),
+    whatsapp: Joi.string().allow("").optional(),
   }).optional(),
   footer: Joi.object({
     description: Joi.string().allow("").optional(),

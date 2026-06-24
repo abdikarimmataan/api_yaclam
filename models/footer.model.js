@@ -40,6 +40,7 @@ const footerSchema = new mongoose.Schema(
       linkedin: { type: String, default: "" },
       youtube: { type: String, default: "" },
       instagram: { type: String, default: "" },
+      whatsapp: { type: String, default: "" },
     },
 
     footer: {

@@ -4,6 +4,7 @@ const { isValidObjectId } = mongoose;
 const BlogPost = require("../models/blog_post.model");
 const BlogCategory = require("../models/blog_category.model");
 const User = require("../models/user.model");
+const upload = require("../middlewares/upload.middleware");
 const {
   buildPublicFilter,
   buildBlogPostPayload,
@@ -169,6 +170,18 @@ module.exports = {
       blogPost.del_status = "Deleted";
       await blogPost.save();
       return Response.customResponse(res, 200, "Deleted successfully");
+    } catch (err) {
+      return Response.errorResponse(res, 500, err.message || err);
+    }
+  },
+
+  uploadCoverImage: async (req, res) => {
+    try {
+      if (!req.file?.filename) {
+        return Response.errorResponse(res, 400, { message: "coverImage file is required" });
+      }
+      const coverImage = upload.toPublicPath(req.file.filename, "blog");
+      return Response.successResponse(res, 200, { coverImage });
     } catch (err) {
       return Response.errorResponse(res, 500, err.message || err);
     }
