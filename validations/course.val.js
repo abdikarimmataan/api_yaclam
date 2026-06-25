@@ -59,6 +59,7 @@ const baseFields = {
   description: Joi.string().allow("").optional(),
   shortDescription: Joi.string().allow("").optional(),
   category: Joi.string().allow("").optional(),
+  courseCategoryId: Joi.string().allow("", null).optional(),
   level: Joi.string().allow("").optional(),
   language: Joi.string().allow("").optional(),
   duration: Joi.string().allow("").optional(),
