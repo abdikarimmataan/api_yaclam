@@ -51,11 +51,14 @@ function applySectionVisibility(payload = {}) {
     data.ctaSection = cta;
   }
 
-  if (data.featuredCoursesSection?.viewAllButton?.isVisible === undefined) {
-    data.featuredCoursesSection = {
-      ...data.featuredCoursesSection,
-      viewAllButton: { ...data.featuredCoursesSection.viewAllButton, isVisible: true },
-    };
+  if (data.featuredCoursesSection && typeof data.featuredCoursesSection === "object") {
+    const featured = { ...data.featuredCoursesSection };
+    if (featured.gridRows === undefined) featured.gridRows = 2;
+    if (featured.gridColumns === undefined) featured.gridColumns = 3;
+    if (featured.viewAllButton?.isVisible === undefined) {
+      featured.viewAllButton = { ...featured.viewAllButton, isVisible: true };
+    }
+    data.featuredCoursesSection = featured;
   }
   if (data.roadmapsSection?.allRoadmapsButton?.isVisible === undefined) {
     data.roadmapsSection = {

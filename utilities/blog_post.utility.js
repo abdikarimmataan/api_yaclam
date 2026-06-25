@@ -1,5 +1,9 @@
 const { parseDeadlineDate: parsePublishedDate } = require("./scholarship.utility");
 
+function isHtmlContent(text) {
+  return /<[a-z][\s\S]*>/i.test(String(text ?? "").trim());
+}
+
 function parseBody(raw) {
   if (raw === undefined || raw === null) return undefined;
   if (Array.isArray(raw)) {
@@ -7,6 +11,7 @@ function parseBody(raw) {
   }
   const text = String(raw).trim();
   if (!text) return [];
+  if (isHtmlContent(text)) return [text];
   if (text.includes("\n\n")) {
     return text
       .split("\n\n")
