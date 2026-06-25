@@ -96,6 +96,11 @@ const courseSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     shortDescription: { type: String, default: "" },
     category: { type: String, default: "" },
+    courseCategoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CourseCategory",
+      default: null,
+    },
     fieldId: { type: mongoose.Schema.Types.ObjectId, ref: "Field", default: null },
     level: { type: String, default: "Beginner" },
     language: { type: String, default: "Somali" },

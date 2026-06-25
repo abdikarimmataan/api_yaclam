@@ -4,6 +4,7 @@ const { isValidObjectId } = mongoose;
 
 const Course = require("../models/course.model");
 const Field = require("../models/field.model");
+const CourseCategory = require("../models/course_category.model");
 const Response = require("../utilities/reponse.utility.js");
 const ResponseMessage = require("../utilities/message.utility.js");
 const PaginationUtility = require("../utilities/pagination_utility.js");
@@ -134,6 +135,27 @@ async function validateField(fieldId) {
   return { field };
 }
 
+async function validateCourseCategory(courseCategoryId) {
+  if (!courseCategoryId) return { category: null };
+  if (!isValidObjectId(courseCategoryId)) {
+    return { error: "courseCategoryId must be a valid id" };
+  }
+  const category = await CourseCategory.findOne({ _id: courseCategoryId, del_status: "Live" });
+  if (!category) return { error: "Course category not found" };
+  return { category };
+}
+
+function applyCourseCategoryToBody(body, category) {
+  if (!category) {
+    body.courseCategoryId = null;
+    return body;
+  }
+  body.courseCategoryId = category._id;
+  return body;
+}
+
+const courseCategoryPopulate = { path: "courseCategoryId", select: "name description sortOrder" };
+
 module.exports = {
   create: async (req, res) => {
     const pendingFiles = collectPendingFiles(req);
@@ -149,6 +171,17 @@ module.exports = {
         return Response.errorResponse(res, fieldCheck.error.includes("not found") ? 404 : 400, {
           message: fieldCheck.error,
         });
+      }
+
+      if (body.courseCategoryId !== undefined) {
+        const categoryCheck = await validateCourseCategory(body.courseCategoryId);
+        if (categoryCheck.error) {
+          rollbackPendingFiles(pendingFiles);
+          return Response.errorResponse(res, categoryCheck.error.includes("not found") ? 404 : 400, {
+            message: categoryCheck.error,
+          });
+        }
+        applyCourseCategoryToBody(body, categoryCheck.category);
       }
 
       if (pendingFiles.length) {
@@ -199,6 +232,9 @@ module.exports = {
       if (req.query.isFree === "true") filter.isFree = true;
       if (req.query.isFeatured === "true") filter.isFeatured = true;
       if (req.query.category) filter.category = req.query.category;
+      if (req.query.courseCategoryId && isValidObjectId(req.query.courseCategoryId)) {
+        filter.courseCategoryId = req.query.courseCategoryId;
+      }
 
       const total = await Course.countDocuments(filter);
       const { pagination, skip } = await PaginationUtility.paginationParams(req, total);
@@ -213,6 +249,7 @@ module.exports = {
 
       pagination.data = await Course.find(filter)
         .populate("fieldId", "name icon")
+        .populate(courseCategoryPopulate)
         .populate("instructor.instructorId", "email profile.full_name profile.avatar_url")
         .sort({ sortOrder: 1, created_at: -1 })
         .skip(skip)
@@ -237,6 +274,7 @@ module.exports = {
 
       const course = await Course.findOne({ _id: id, del_status: "Live" })
         .populate("fieldId", "name icon")
+        .populate(courseCategoryPopulate)
         .populate("instructor.instructorId", "email profile.full_name profile.avatar_url");
       if (!course) {
         return Response.customResponse(res, 404, ResponseMessage.NOT_FOUND);
@@ -267,6 +305,9 @@ module.exports = {
       if (req.query.isFree === "true") filter.isFree = true;
       if (req.query.isFeatured === "true") filter.isFeatured = true;
       if (req.query.category) filter.category = req.query.category;
+      if (req.query.courseCategoryId && isValidObjectId(req.query.courseCategoryId)) {
+        filter.courseCategoryId = req.query.courseCategoryId;
+      }
 
       const total = await Course.countDocuments(filter);
       const { pagination, skip } = await PaginationUtility.paginationParams(req, total);
@@ -281,6 +322,7 @@ module.exports = {
 
       pagination.data = await Course.find(filter)
         .populate("fieldId", "name icon")
+        .populate(courseCategoryPopulate)
         .populate("instructor.instructorId", "email profile.full_name profile.avatar_url")
         .sort({ sortOrder: 1, created_at: -1 })
         .skip(skip)
@@ -329,6 +371,17 @@ module.exports = {
             message: fieldCheck.error,
           });
         }
+      }
+
+      if (body.courseCategoryId !== undefined) {
+        const categoryCheck = await validateCourseCategory(body.courseCategoryId);
+        if (categoryCheck.error) {
+          rollbackPendingFiles(pendingFiles);
+          return Response.errorResponse(res, categoryCheck.error.includes("not found") ? 404 : 400, {
+            message: categoryCheck.error,
+          });
+        }
+        applyCourseCategoryToBody(body, categoryCheck.category);
       }
 
       let replacedPreviewVideoUrl = null;
