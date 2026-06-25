@@ -29,7 +29,15 @@ const blogPostSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
+function isHtmlContent(text) {
+  return /<[a-z][\s\S]*>/i.test(String(text ?? "").trim());
+}
+
 blogPostSchema.pre("save", function syncBlogContent(next) {
+  if (this.content && isHtmlContent(this.content)) {
+    this.body = [this.content];
+    return next();
+  }
   if (Array.isArray(this.body) && this.body.length && !this.content) {
     this.content = this.body.join("\n\n");
   }

@@ -27,6 +27,8 @@ const featuredCoursesSectionSchema = new mongoose.Schema(
     title: { type: String, default: "" },
     subtitle: { type: String, default: "" },
     cardNumberVisible: { type: Number, default: 5, min: 0 },
+    gridRows: { type: Number, default: 2, min: 1, max: 6 },
+    gridColumns: { type: Number, default: 3, min: 1, max: 6 },
     isVisible: { type: Boolean, default: true },
     viewAllButton: {
       type: sectionButtonSchema,
