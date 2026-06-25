@@ -6,6 +6,7 @@
 require("dotenv").config();
 
 const mongoose = require("mongoose");
+require("../models/country.model");
 const University = require("../models/university.model");
 const UniversityManage = require("../models/university_manage.model");
 const UniversityProgram = require("../models/university_program.model");

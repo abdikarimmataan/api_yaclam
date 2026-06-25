@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { isValidObjectId } = mongoose;
 
+require("../models/country.model");
 const UniversityLanguage = require("../models/university_language.model");
 const UniversityLocation = require("../models/university_location.model");
 const UniversityCategory = require("../models/university_category.model");
